@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="400" height="400" fill="none">
+  <rect width="100" height="100" rx="16" fill="#F4EFEA" stroke="#E5DDD3" stroke-width="1.5"/>
+  <path d="M25 25 L40 15 L55 25 L50 85 L30 85 Z M40 15 L40 85 M25 25 L12 55 L22 60 M55 25 L68 55 L58 60" stroke="#7D746A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#7D746A" fill-opacity="0.12"/>
+  <text x="50" y="94" font-family="'Plus Jakarta Sans', sans-serif" font-size="5" font-weight="600" text-anchor="middle" fill="#6E665E" letter-spacing="0.5">KNIT CARDIGAN</text>
+</svg>

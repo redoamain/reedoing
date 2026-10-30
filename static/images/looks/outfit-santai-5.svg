@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 340" width="600" height="340" fill="none">
+	<defs>
+		<linearGradient id="bgGrad" x1="0" y1="0" x2="600" y2="340" gradientUnits="userSpaceOnUse">
+			<stop offset="0%" stop-color="#FBF9F5"/>
+			<stop offset="100%" stop-color="#F3EDE3"/>
+		</linearGradient>
+		<filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.04" />
+		</filter>
+	</defs>
+
+	<!-- Base Card -->
+	<rect width="600" height="340" rx="20" fill="url(#bgGrad)" stroke="#E4DCD0" stroke-width="1.5"/>
+
+	<!-- Header Pill Badges -->
+	<g transform="translate(32, 28)">
+		<rect width="120" height="26" rx="13" fill="#E8DEC8" />
+		<text x="60" y="17" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="800" text-anchor="middle" fill="#524433" letter-spacing="0.8">SANTAI / WFH</text>
+	</g>
+
+	<g transform="translate(480, 28)">
+		<rect width="88" height="26" rx="13" fill="#FFFFFF" fill-opacity="0.9" stroke="#E3DBD0" stroke-width="1" />
+		<text x="44" y="17" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#6B6258" letter-spacing="0.5">LOOK #27</text>
+	</g>
+
+	<!-- Items Row -->
+	
+		<g transform="translate(102, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M25 25 L40 15 L55 25 L50 85 L30 85 Z M40 15 L40 85 M25 25 L12 55 L22 60 M55 25 L68 55 L58 60" stroke="#5C5248" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#5C5248" fill-opacity="0.16" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Knit Cardigan</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">OUTER</text>
+		</g>
+		<g transform="translate(204, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M25 22 L40 16 L55 22 L52 80 L28 80 Z M25 22 L14 55 M55 22 L66 55" stroke="#2A2B2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#2A2B2D" fill-opacity="0.22" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Fine Knit Top</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">ATASAN</text>
+		</g>
+		<g transform="translate(306, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M28 20 L52 20 L50 85 L42 85 L40 46 L38 85 L30 85 Z" stroke="#8E6E4C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#E8D9C8" fill-opacity="0.55" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Smart Chinos</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">BAWAHAN</text>
+		</g>
+		<g transform="translate(408, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M15 55 Q25 45 45 45 Q65 45 75 50 Q85 55 85 68 L15 68 Z M20 68 L80 68 M35 48 L45 58" stroke="#4A4744" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#FAF8F5" fill-opacity="0.9" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Clean Sneakers</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">SEPATU</text>
+		</g>
+
+	<!-- Divider Line -->
+	<line x1="36" y1="234" x2="564" y2="234" stroke="#E3DBD0" stroke-width="1" stroke-dasharray="4 4" />
+
+	<!-- Bottom Section: Title & Formula -->
+	<g transform="translate(36, 268)">
+		<text x="0" y="0" font-family="'Playfair Display', Georgia, serif" font-size="20" font-weight="800" fill="#1C1A19">Cozy Study Corner</text>
+		<text x="0" y="24" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="500" fill="#6B6258">Cardigan Halus + Inner Top + Celana Nyaman</text>
+	</g>
+
+	<g transform="translate(564, 276)">
+		<text x="0" y="0" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="end" fill="#9C9286" letter-spacing="1">RUPAKA LOOKBOOK</text>
+		<text x="0" y="14" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7.5" font-weight="500" text-anchor="end" fill="#A89E92">12-Capsule Formula</text>
+	</g>
+</svg>

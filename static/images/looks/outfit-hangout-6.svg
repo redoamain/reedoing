@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 340" width="600" height="340" fill="none">
+	<defs>
+		<linearGradient id="bgGrad" x1="0" y1="0" x2="600" y2="340" gradientUnits="userSpaceOnUse">
+			<stop offset="0%" stop-color="#FAF6F4"/>
+			<stop offset="100%" stop-color="#F3E9E4"/>
+		</linearGradient>
+		<filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+			<feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.04" />
+		</filter>
+	</defs>
+
+	<!-- Base Card -->
+	<rect width="600" height="340" rx="20" fill="url(#bgGrad)" stroke="#E4DCD0" stroke-width="1.5"/>
+
+	<!-- Header Pill Badges -->
+	<g transform="translate(32, 28)">
+		<rect width="120" height="26" rx="13" fill="#EADAD3" />
+		<text x="60" y="17" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="800" text-anchor="middle" fill="#5E3829" letter-spacing="0.8">HANGOUT</text>
+	</g>
+
+	<g transform="translate(480, 28)">
+		<rect width="88" height="26" rx="13" fill="#FFFFFF" fill-opacity="0.9" stroke="#E3DBD0" stroke-width="1" />
+		<text x="44" y="17" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#6B6258" letter-spacing="0.5">LOOK #22</text>
+	</g>
+
+	<!-- Items Row -->
+	
+		<g transform="translate(51, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M20 30 L40 10 L60 30 L55 90 L25 90 Z M40 10 L40 90 M25 35 L10 65 L20 70 L30 45 M55 35 L70 65 L60 70 L50 45" stroke="#262423" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#262423" fill-opacity="0.18" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Tailored Blazer</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">OUTER</text>
+		</g>
+		<g transform="translate(153, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M25 20 Q40 28 55 20 L52 75 L28 75 Z M25 20 L12 40 L22 44 M55 20 L68 40 L58 44" stroke="#3D3A37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#FAF7F2" fill-opacity="0.85" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Cotton Tee</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">ATASAN</text>
+		</g>
+		<g transform="translate(255, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M27 20 L53 20 L51 86 L43 86 L40 48 L37 86 L29 86 Z M33 28 Q40 30 47 28" stroke="#223347" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#223347" fill-opacity="0.22" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Classic Denim</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">BAWAHAN</text>
+		</g>
+		<g transform="translate(357, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M15 55 Q25 45 45 45 Q65 45 75 50 Q85 55 85 68 L15 68 Z M20 68 L80 68 M35 48 L45 58" stroke="#4A4744" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#FAF8F5" fill-opacity="0.9" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Clean Sneakers</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">SEPATU</text>
+		</g>
+		<g transform="translate(459, 88)">
+			<rect width="90" height="126" rx="14" fill="#FFFFFF" fill-opacity="0.82" stroke="#E3DBD0" stroke-width="1.2" />
+			<g transform="translate(13, 8) scale(0.64)">
+				<rect width="100" height="100" rx="12" fill="#F4EFEA" fill-opacity="0.7" stroke="#E5DDD3" stroke-width="1" />
+				<path d="M30 40 L30 25 Q40 20 50 25 L50 40 M20 40 L60 40 L56 85 L24 85 Z" stroke="#3A2A20" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A2A20" fill-opacity="0.25" />
+			</g>
+			<text x="45" y="89" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#2C2A29">Structured Bag</text>
+			<text x="45" y="103" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="600" text-anchor="middle" fill="#8C8278" letter-spacing="0.5">AKSESORI</text>
+		</g>
+
+	<!-- Divider Line -->
+	<line x1="36" y1="234" x2="564" y2="234" stroke="#E3DBD0" stroke-width="1" stroke-dasharray="4 4" />
+
+	<!-- Bottom Section: Title & Formula -->
+	<g transform="translate(36, 268)">
+		<text x="0" y="0" font-family="'Playfair Display', Georgia, serif" font-size="20" font-weight="800" fill="#1C1A19">Late Night Hangout</text>
+		<text x="0" y="24" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="500" fill="#6B6258">Blazer + Kaos Putih + Denim Gelap + Sneakers</text>
+	</g>
+
+	<g transform="translate(564, 276)">
+		<text x="0" y="0" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="end" fill="#9C9286" letter-spacing="1">RUPAKA LOOKBOOK</text>
+		<text x="0" y="14" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7.5" font-weight="500" text-anchor="end" fill="#A89E92">12-Capsule Formula</text>
+	</g>
+</svg>

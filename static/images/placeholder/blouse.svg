@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="400" height="400" fill="none">
+  <rect width="100" height="100" rx="16" fill="#F4EFEA" stroke="#E5DDD3" stroke-width="1.5"/>
+  <path d="M28 20 Q40 30 52 20 L50 80 Q40 82 30 80 Z M28 20 L15 50 M52 20 L65 50" stroke="#C8B29E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#C8B29E" fill-opacity="0.12"/>
+  <text x="50" y="94" font-family="'Plus Jakarta Sans', sans-serif" font-size="5" font-weight="600" text-anchor="middle" fill="#6E665E" letter-spacing="0.5">DRAPE TOP</text>
+</svg>

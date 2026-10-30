@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /mulai
+Allow: /kontak
+Allow: /ketentuan
+Allow: /privasi
+Disallow: /panduan/
+
+Sitemap: https://rupaka.style/sitemap.xml

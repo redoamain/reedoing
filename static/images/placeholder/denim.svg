@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="400" height="400" fill="none">
+  <rect width="100" height="100" rx="16" fill="#F4EFEA" stroke="#E5DDD3" stroke-width="1.5"/>
+  <path d="M27 20 L53 20 L51 86 L43 86 L40 48 L37 86 L29 86 Z M33 28 Q40 30 47 28" stroke="#2B3D52" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#2B3D52" fill-opacity="0.12"/>
+  <text x="50" y="94" font-family="'Plus Jakarta Sans', sans-serif" font-size="5" font-weight="600" text-anchor="middle" fill="#6E665E" letter-spacing="0.5">CLASSIC DENIM</text>
+</svg>

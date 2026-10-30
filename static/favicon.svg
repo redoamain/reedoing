@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="rupakaDarkBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#262320" />
+      <stop offset="100%" stop-color="#141210" />
+    </linearGradient>
+    <linearGradient id="accentSparkle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <!-- Background Squircle Container -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#rupakaDarkBg)" stroke="#44403C" stroke-width="1.5" />
+  
+  <!-- Stylized Elegant Serif "R" for reedoing -->
+  <path d="M 22 47 L 22 17 L 33.5 17 C 39.5 17 43.5 20 43.5 25 C 43.5 29 40.5 31.8 36.5 32.6 L 44 47 L 38 47 L 31.2 33.5 L 27.5 33.5 L 27.5 47 Z M 27.5 29 L 33.2 29 C 36.5 29 38.2 27.5 38.2 25 C 38.2 22.5 36.5 21 33.2 21 L 27.5 21 Z" fill="#FBF9F5" />
+  
+  <!-- Subtle Stylist Diamond Sparkle -->
+  <path d="M 47 13 L 48.5 17 L 52.5 18.5 L 48.5 20 L 47 24 L 45.5 20 L 41.5 18.5 L 45.5 17 Z" fill="url(#accentSparkle)" />
+</svg>
