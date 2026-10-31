@@ -12,7 +12,7 @@ import {
 import { generateStyleGuide } from "$lib/engine";
 import { checkRateLimit } from "$lib/server/rate-limit";
 import { generateOutfitTryOn, getGeminiApiKey } from "$lib/server/gemini";
-import type { QuizAnswers, StyleGuideResult } from "$lib/types/style";
+import type { QuizAnswers, StyleGuideResult, Undertone } from "$lib/types/style";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const id = params.id;

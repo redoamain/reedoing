@@ -9,6 +9,7 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import { Button } from "$lib/components/ui/button";
 	import { Progress } from "$lib/components/ui/progress";
+	import Pagination from "$lib/components/ui/pagination";
 
 	import Share2Icon from "@lucide/svelte/icons/share-2";
 	import PrinterIcon from "@lucide/svelte/icons/printer";
@@ -106,6 +107,28 @@
 			(o: Outfit) => o.occasion === selectedOccasion
 		);
 	});
+
+	// Pagination outfit lookbook
+	let outfitPage = $state(1);
+	const outfitsPerPage = 9;
+	let paginatedOutfits = $derived.by(() => {
+		const start = (outfitPage - 1) * outfitsPerPage;
+		return filteredOutfits.slice(start, start + outfitsPerPage);
+	});
+
+	$effect(() => {
+		selectedOccasion;
+		outfitPage = 1;
+	});
+
+	function scrollToLookbook() {
+		if (typeof document !== "undefined") {
+			const el = document.getElementById("katalog-lookbook-heading");
+			if (el) {
+				el.scrollIntoView({ behavior: "smooth", block: "start" });
+			}
+		}
+	}
 
 	// Form toggle checklist tersembunyi
 	let checkForm: HTMLFormElement | undefined = $state();
@@ -1072,7 +1095,7 @@
 						{/if}
 					</div>
 
-					<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
+					<div id="katalog-lookbook-heading" class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
 						<div>
 							<h2 class="font-serif text-2xl font-normal text-foreground">Katalog {guide.outfits.length} Kombinasi Look</h2>
 							<p class="text-xs sm:text-sm text-muted-foreground mt-0.5 font-normal">
@@ -1113,32 +1136,39 @@
 						{/each}
 					</div>
 
-					<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-						{#each filteredOutfits as outfit, idx (outfit.id)}
-							{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
-							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group">
-								<div>
-									{#if currentImage}
-										<div class="relative h-56 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
-											<img
-												src={currentImage}
-												alt={outfit.name}
-												class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102"
-												loading="lazy"
-											/>
+					{#if filteredOutfits.length === 0}
+						<div class="rounded-xl border border-dashed border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-12 text-center">
+							<ShirtIcon class="mx-auto size-10 text-muted-foreground/40 mb-3" />
+							<p class="text-sm font-semibold text-foreground">Tidak ada look yang sesuai dengan filter.</p>
+							<p class="text-xs text-muted-foreground mt-1">Silakan pilih kategori situasi lain di atas.</p>
+						</div>
+					{:else}
+						<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+							{#each paginatedOutfits as outfit, idx (outfit.id)}
+								{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
+								<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group">
+									<div>
+										{#if currentImage}
+											<div class="relative h-56 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
+												<img
+													src={currentImage}
+													alt={outfit.name}
+													class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102"
+													loading="lazy"
+												/>
 
-											<!-- Badges di atas gambar -->
-											<div class="absolute top-2.5 left-2.5">
-												<span class="rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-													{outfit.occasionLabel}
-												</span>
-											</div>
+												<!-- Badges di atas gambar -->
+												<div class="absolute top-2.5 left-2.5">
+													<span class="rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+														{outfit.occasionLabel}
+													</span>
+												</div>
 
-											<div class="absolute top-2.5 right-2.5">
-												<span class="rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground">
-													#{idx + 1}
-												</span>
-											</div>
+												<div class="absolute top-2.5 right-2.5">
+													<span class="rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground">
+														#{(outfitPage - 1) * outfitsPerPage + idx + 1}
+													</span>
+												</div>
 
 											{#if aiImages[outfit.id]}
 												<span class="absolute bottom-2.5 left-2.5 rounded-full border border-border/80 bg-background/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-foreground shadow-2xs">
@@ -1241,6 +1271,18 @@
 							</Card>
 						{/each}
 					</div>
+
+					<div class="rounded-xl border border-border/80 bg-card p-4 mt-6">
+						<Pagination
+							bind:page={outfitPage}
+							totalItems={filteredOutfits.length}
+							perPage={outfitsPerPage}
+							itemLabel="look outfit"
+							showEdges={true}
+							onPageChange={() => scrollToLookbook()}
+						/>
+					</div>
+				{/if}
 
 					<!-- Disclaimer Afiliasi di Outfit -->
 					<div class="mt-6 rounded-lg border border-border/70 bg-stone-50/40 dark:bg-stone-900/20 p-4 text-xs text-muted-foreground flex items-start gap-3">

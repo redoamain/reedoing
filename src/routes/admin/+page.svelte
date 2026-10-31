@@ -11,6 +11,7 @@
 	import { Input } from "$lib/components/ui/input";
 	import { Label } from "$lib/components/ui/label";
 	import { Progress } from "$lib/components/ui/progress";
+	import Pagination from "$lib/components/ui/pagination";
 
 	import ShoppingBagIcon from "@lucide/svelte/icons/shopping-bag";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
@@ -243,6 +244,20 @@
 		return list;
 	});
 
+	// Pagination produk pakaian
+	let itemPage = $state(1);
+	let itemsPerPage = $state(8);
+	let paginatedItems = $derived.by(() => {
+		const start = (itemPage - 1) * itemsPerPage;
+		return filteredItems.slice(start, start + itemsPerPage);
+	});
+
+	$effect(() => {
+		filterItemStatus;
+		searchItemQuery;
+		itemPage = 1;
+	});
+
 	// Data outfit aktif yang diedit
 	let editingOutfit = $state<{
 		id: string;
@@ -295,6 +310,21 @@
 		}
 
 		return list;
+	});
+
+	// Pagination outfit
+	let outfitPage = $state(1);
+	let outfitsPerPage = $state(9);
+	let paginatedOutfits = $derived.by(() => {
+		const start = (outfitPage - 1) * outfitsPerPage;
+		return filteredOutfits.slice(start, start + outfitsPerPage);
+	});
+
+	$effect(() => {
+		selectedOccasion;
+		filterAffiliateStatus;
+		searchQuery;
+		outfitPage = 1;
 	});
 
 	function openAddOutfitDialog() {
@@ -836,7 +866,7 @@
 					</div>
 				{:else}
 					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						{#each filteredOutfits as outfit, idx (outfit.id)}
+						{#each paginatedOutfits as outfit, idx (outfit.id)}
 							{@const hasAffiliate = Boolean(outfit.affiliateUrl?.trim())}
 							{@const adminImg = outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
 							<Card class="border-border bg-card overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
@@ -967,6 +997,17 @@
 							</Card>
 						{/each}
 					</div>
+
+					<div class="rounded-xl border border-border/80 bg-card p-4">
+						<Pagination
+							bind:page={outfitPage}
+							bind:perPage={outfitsPerPage}
+							perPageOptions={[9, 18, 36]}
+							totalItems={filteredOutfits.length}
+							itemLabel="outfit"
+							showEdges={true}
+						/>
+					</div>
 				{/if}
 			</Tabs.Content>
 
@@ -1030,75 +1071,93 @@
 						</div>
 					</div>
 
-					<div class="mt-4 divide-y divide-border/80">
-						{#each filteredItems as item (item.id)}
-							{@const hasAffiliate = Boolean(item.affiliateUrl?.trim())}
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
-								<div class="flex items-center gap-3.5 flex-1 min-w-0">
-									<!-- Foto Thumbnail Produk Pakaian -->
-									<div class="size-14 rounded-xl border border-border/80 bg-muted/30 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
-										{#if item.imageUrl}
-											<img src={item.imageUrl} alt={item.name} class="size-full object-cover" />
-										{:else}
-											<ShirtIcon class="size-6 text-muted-foreground/30" />
-										{/if}
-									</div>
-
-									<div class="space-y-1 flex-1 min-w-0">
-										<div class="flex flex-wrap items-center gap-2">
-											<span class="font-serif text-sm font-bold text-foreground">
-												{item.name}
-											</span>
-											<Badge variant="outline" class="text-[10px] uppercase font-bold text-foreground bg-background border-border">
-												{item.category}
-											</Badge>
-											{#if item.priceEstimate}
-												<span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-													{item.priceEstimate}
-												</span>
+					{#if filteredItems.length === 0}
+						<div class="rounded-xl border border-dashed border-border/80 bg-muted/20 p-8 text-center mt-4">
+							<ShirtIcon class="mx-auto size-9 text-muted-foreground/40 mb-2" />
+							<p class="text-sm font-semibold text-foreground">Tidak ada produk pakaian yang cocok.</p>
+							<p class="text-xs text-muted-foreground mt-0.5">Coba ubah kata kunci pencarian atau reset filter status.</p>
+						</div>
+					{:else}
+						<div class="mt-4 divide-y divide-border/80">
+							{#each paginatedItems as item (item.id)}
+								{@const hasAffiliate = Boolean(item.affiliateUrl?.trim())}
+								<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+									<div class="flex items-center gap-3.5 flex-1 min-w-0">
+										<!-- Foto Thumbnail Produk Pakaian -->
+										<div class="size-14 rounded-xl border border-border/80 bg-muted/30 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+											{#if item.imageUrl}
+												<img src={item.imageUrl} alt={item.name} class="size-full object-cover" />
+											{:else}
+												<ShirtIcon class="size-6 text-muted-foreground/30" />
 											{/if}
 										</div>
 
-										{#if hasAffiliate}
-											<div class="flex items-center gap-2 text-xs min-w-0">
-												<span class="text-[#ee4d2d] font-semibold flex items-center gap-1 shrink-0">
-													<ShoppingBagIcon class="size-3" />
-													Shopee:
+										<div class="space-y-1 flex-1 min-w-0">
+											<div class="flex flex-wrap items-center gap-2">
+												<span class="font-serif text-sm font-bold text-foreground">
+													{item.name}
 												</span>
-												<span class="truncate font-mono text-[11px] text-foreground/80 max-w-[150px] sm:max-w-sm md:max-w-md">
-													{item.affiliateUrl}
-												</span>
-												<a
-													href={item.affiliateUrl}
-													target="_blank"
-													rel="noopener noreferrer"
-													class="text-[10px] font-semibold text-[#ee4d2d] hover:text-[#d73211] hover:underline inline-flex items-center gap-0.5 shrink-0"
-												>
-													Cek <ExternalLinkIcon class="size-2.5" />
-												</a>
+												<Badge variant="outline" class="text-[10px] uppercase font-bold text-foreground bg-background border-border">
+													{item.category}
+												</Badge>
+												{#if item.priceEstimate}
+													<span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+														{item.priceEstimate}
+													</span>
+												{/if}
 											</div>
-										{:else}
-											<p class="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-												⚠ Belum ada tautan Shopee Affiliate untuk produk ini
-											</p>
-										{/if}
+
+											{#if hasAffiliate}
+												<div class="flex items-center gap-2 text-xs min-w-0">
+													<span class="text-[#ee4d2d] font-semibold flex items-center gap-1 shrink-0">
+														<ShoppingBagIcon class="size-3" />
+														Shopee:
+													</span>
+													<span class="truncate font-mono text-[11px] text-foreground/80 max-w-[150px] sm:max-w-sm md:max-w-md">
+														{item.affiliateUrl}
+													</span>
+													<a
+														href={item.affiliateUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="text-[10px] font-semibold text-[#ee4d2d] hover:text-[#d73211] hover:underline inline-flex items-center gap-0.5 shrink-0"
+													>
+														Cek <ExternalLinkIcon class="size-2.5" />
+													</a>
+												</div>
+											{:else}
+												<p class="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+													⚠ Belum ada tautan Shopee Affiliate untuk produk ini
+												</p>
+											{/if}
+										</div>
+									</div>
+
+									<div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+										<Button
+											variant="outline"
+											size="sm"
+											onclick={() => openEditItemDialog(item)}
+											class="gap-1.5 text-xs font-semibold text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground border-border/80"
+										>
+											<PencilIcon class="size-3.5" />
+											<span>Edit Produk & Foto</span>
+										</Button>
 									</div>
 								</div>
+							{/each}
+						</div>
 
-								<div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-									<Button
-										variant="outline"
-										size="sm"
-										onclick={() => openEditItemDialog(item)}
-										class="gap-1.5 text-xs font-semibold text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground border-border/80"
-									>
-										<PencilIcon class="size-3.5" />
-										<span>Edit Produk & Foto</span>
-									</Button>
-								</div>
-							</div>
-						{/each}
-					</div>
+						<Pagination
+							bind:page={itemPage}
+							bind:perPage={itemsPerPage}
+							perPageOptions={[8, 16, 32]}
+							totalItems={filteredItems.length}
+							itemLabel="produk pakaian"
+							showEdges={true}
+							class="mt-6"
+						/>
+					{/if}
 				</div>
 			</Tabs.Content>
 
