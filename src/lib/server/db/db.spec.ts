@@ -16,6 +16,7 @@ import {
 	saveAffiliateItem,
 	getAdminSettings,
 	saveAdminSetting,
+	deleteAdminSetting,
 	getAffiliateMap
 } from "./queries";
 import { generateStyleGuide } from "$lib/engine";
@@ -149,5 +150,46 @@ describe("Database SQLite & Drizzle Queries", () => {
 		await saveAdminSetting("shopee_fallback_url", "https://shopee.co.id/rupakastyle");
 		const settings = await getAdminSettings();
 		expect(settings.shopee_fallback_url).toBe("https://shopee.co.id/rupakastyle");
+	});
+
+	it("menyimpan, membaca, dan mereset pengaturan kata-kata Hero dan Tone Color", async () => {
+		// 1. Cek default value sebelum diubah
+		const initial = await getAdminSettings();
+		expect(initial.hero_title_1).toBe("Lebih sedikit pakaian,");
+		expect(initial.hero_default_tone).toBe("hangat");
+
+		// 2. Simpan kata-kata hero kustom
+		await saveAdminSetting("hero_title_1", "Gaya Minimalis Elegan,");
+		await saveAdminSetting("hero_title_2", "maksimalkan potensimu.");
+		await saveAdminSetting("hero_description", "Panduan gaya personal modern dengan 12 item esensial.");
+		await saveAdminSetting("hero_cta_text", "Mulai Konsultasi");
+
+		// 3. Simpan pengaturan tone color kustom
+		await saveAdminSetting("hero_default_tone", "dingin");
+		const customWarmColors = [
+			{ name: "Cream White", hex: "#FFFDF9", role: "base" },
+			{ name: "Golden Honey", hex: "#D4A373", role: "base" },
+			{ name: "Coffee", hex: "#2B1E16", role: "base" },
+			{ name: "Forest", hex: "#3A5A40", role: "base" },
+			{ name: "Rust", hex: "#BC4749", role: "accent" },
+			{ name: "Mustard", hex: "#E9C46A", role: "accent" }
+		];
+		await saveAdminSetting("hero_tone_warm_colors", JSON.stringify(customWarmColors));
+
+		// 4. Verifikasi pembacaan
+		const updated = await getAdminSettings();
+		expect(updated.hero_title_1).toBe("Gaya Minimalis Elegan,");
+		expect(updated.hero_title_2).toBe("maksimalkan potensimu.");
+		expect(updated.hero_description).toBe("Panduan gaya personal modern dengan 12 item esensial.");
+		expect(updated.hero_cta_text).toBe("Mulai Konsultasi");
+		expect(updated.hero_default_tone).toBe("dingin");
+		expect(JSON.parse(updated.hero_tone_warm_colors)).toEqual(customWarmColors);
+
+		// 5. Hapus / Reset pengaturan dan pastikan kembali ke fallback default
+		await deleteAdminSetting("hero_title_1");
+		await deleteAdminSetting("hero_default_tone");
+		const reset = await getAdminSettings();
+		expect(reset.hero_title_1).toBe("Lebih sedikit pakaian,");
+		expect(reset.hero_default_tone).toBe("hangat");
 	});
 });

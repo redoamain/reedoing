@@ -185,7 +185,7 @@ export async function getSubmissionResult(submissionId: string) {
 	const enrichedOutfits = (outfits || []).map((o: any) => ({
 		...o,
 		affiliateUrl: affiliateMap.outfits[o.id] || o.affiliateUrl || null,
-		imageUrl: affiliateMap.outfitImages[o.id] || o.imageUrl || `/images/looks/${o.id}.svg`,
+		imageUrl: affiliateMap.outfitImages[o.id] || o.imageUrl || `/images/real/looks/${o.id}.jpg`,
 		items: (o.items || []).map((it: any) => ({
 			...it,
 			affiliateUrl: affiliateMap.items[it.id] || null,
@@ -332,7 +332,7 @@ export async function getAllAdminOutfits() {
 
 	return rows.map((r) => ({
 		...r,
-		imageUrl: r.imageUrl || `/images/looks/${r.id}.svg`,
+		imageUrl: r.imageUrl || `/images/real/looks/${r.id}.jpg`,
 		itemIds: typeof r.itemIds === "string" ? JSON.parse(r.itemIds) : (r.itemIds as string[])
 	}));
 }
@@ -353,7 +353,7 @@ export async function getActiveAdminOutfits() {
 		styleTips: r.styleTips,
 		itemIds: typeof r.itemIds === "string" ? JSON.parse(r.itemIds) : (r.itemIds as string[]),
 		affiliateUrl: r.affiliateUrl || "",
-		imageUrl: r.imageUrl || `/images/looks/${r.id}.svg`
+		imageUrl: r.imageUrl || `/images/real/looks/${r.id}.jpg`
 	}));
 }
 
@@ -459,7 +459,7 @@ export async function resetDefaultOutfits() {
 				it.styleTips,
 				JSON.stringify(it.itemIds),
 				it.affiliateUrl || null,
-				it.imageUrl || `/images/looks/${it.id}.svg`,
+				it.imageUrl || `/images/real/looks/${it.id}.jpg`,
 				i + 1,
 				now,
 				now
@@ -529,12 +529,63 @@ export async function getAdminSettings(): Promise<Record<string, string>> {
 		admin_password: process.env.ADMIN_PASSWORD || "admin123",
 		shopee_fallback_url: "https://shopee.co.id",
 		affiliate_disclaimer:
-			"Tautan pakaian di atas terhubung ke toko resmi di Shopee. Kami dapat memperoleh sedikit komisi dari pembelianmu tanpa biaya tambahan."
+			"Tautan pakaian di atas terhubung ke toko resmi di Shopee. Kami dapat memperoleh sedikit komisi dari pembelianmu tanpa biaya tambahan.",
+		// Pengaturan Teks Hero Section
+		hero_title_1: "Lebih sedikit pakaian,",
+		hero_title_2: "lebih banyak gaya.",
+		hero_description:
+			"Bangun capsule wardrobe fungsional 12 item yang menghasilkan 30+ kombinasi outfit siap pakai. Dirancang personal untuk pria dan wanita berdasarkan undertone urat nadi dan proporsi tubuhmu.",
+		hero_cta_text: "Mulai Style Check",
+		hero_cta_secondary_text: "Lihat Contoh Lookbook",
+		hero_cta_subtext: "Gratis · Sekitar 3 menit · Langsung siap pakai",
+		hero_floating_text: "Deteksi warna urat nadi pergelangan tangan otomatis",
+		hero_stat_1_val: "12 Item",
+		hero_stat_1_lbl: "Wardrobe esensial",
+		hero_stat_2_val: "30+ Look",
+		hero_stat_2_lbl: "Kombinasi siap pakai",
+		hero_stat_3_val: "100%",
+		hero_stat_3_lbl: "Gratis selamanya",
+		// Pengaturan Tone Color Hero
+		hero_default_tone: "hangat",
+		hero_tone_warm_name: "Warm Earth & Sun",
+		hero_tone_warm_desc: "Nuansa bumi hangat: broken white, camel, espresso, dan aksen terracotta.",
+		hero_tone_warm_colors: JSON.stringify([
+			{ name: "Broken White", hex: "#F9F6F0", role: "base" },
+			{ name: "Oat Camel", hex: "#C2A27E", role: "base" },
+			{ name: "Espresso Brown", hex: "#3D2B1F", role: "base" },
+			{ name: "Deep Olive", hex: "#4E5340", role: "base" },
+			{ name: "Terracotta", hex: "#B85D43", role: "accent" },
+			{ name: "Warm Amber", hex: "#D49B4B", role: "accent" }
+		]),
+		hero_tone_cool_name: "Cool Slate & Coastal",
+		hero_tone_cool_desc: "Nuansa sejuk berkelas: pure white, classic navy, charcoal, dan slate blue.",
+		hero_tone_cool_colors: JSON.stringify([
+			{ name: "Crisp White", hex: "#FFFFFF", role: "base" },
+			{ name: "Classic Navy", hex: "#1B2A47", role: "base" },
+			{ name: "Charcoal Grey", hex: "#33383F", role: "base" },
+			{ name: "Heather Fog", hex: "#CBD2D9", role: "base" },
+			{ name: "Slate Blue", hex: "#4D6B88", role: "accent" },
+			{ name: "Deep Burgundy", hex: "#6B1D2F", role: "accent" }
+		]),
+		hero_tone_neutral_name: "Neutral Mineral & Stone",
+		hero_tone_neutral_desc: "Nuansa netral seimbang: soft ecru, midnight graphite, taupe, dan sage green.",
+		hero_tone_neutral_colors: JSON.stringify([
+			{ name: "Soft Ecru", hex: "#F5F2EB", role: "base" },
+			{ name: "Midnight Graphite", hex: "#26292E", role: "base" },
+			{ name: "Smokey Taupe", hex: "#7A7265", role: "base" },
+			{ name: "French Navy", hex: "#202E42", role: "base" },
+			{ name: "Muted Sage", hex: "#768B75", role: "accent" },
+			{ name: "Rosewood Mauve", hex: "#9B6A6C", role: "accent" }
+		])
 	};
 	for (const row of rows) {
 		res[row.key] = row.value;
 	}
 	return res;
+}
+
+export async function deleteAdminSetting(key: string) {
+	await db.delete(adminSettings).where(eq(adminSettings.key, key));
 }
 
 export async function saveAdminSetting(key: string, value: string) {

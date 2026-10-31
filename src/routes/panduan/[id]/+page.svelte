@@ -895,12 +895,12 @@
 						{#each guide.capsule as item (item.id)}
 							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl">
 								<div>
-									<div class="aspect-4/3 bg-stone-50 dark:bg-stone-900/40 p-5 flex items-center justify-center border-b border-border/70 relative">
+									<div class="aspect-4/3 bg-stone-50 dark:bg-stone-900/40 p-3 flex items-center justify-center border-b border-border/70 relative overflow-hidden">
 										<img
-											src={item.imageUrl || `/images/placeholder/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.svg`}
+											src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
 											alt={item.name}
 											loading="lazy"
-											class="max-h-36 w-auto object-contain transition-transform duration-300 hover:scale-105"
+											class="h-full w-full object-cover rounded-lg transition-transform duration-500 hover:scale-105"
 										/>
 										<span class="absolute top-3 left-3 rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
 											{item.category}
@@ -1115,15 +1115,15 @@
 
 					<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 						{#each filteredOutfits as outfit, idx (outfit.id)}
-							{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/looks/${outfit.id}.svg`}
+							{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
 							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group">
 								<div>
 									{#if currentImage}
-										<div class="relative h-52 sm:h-56 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
+										<div class="relative h-56 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
 											<img
 												src={currentImage}
 												alt={outfit.name}
-												class="h-full w-full {aiImages[outfit.id] ? 'object-cover' : 'object-contain p-2'} transition-transform duration-500 group-hover:scale-102"
+												class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102"
 												loading="lazy"
 											/>
 
@@ -1189,11 +1189,12 @@
 															<div class="flex items-center gap-2.5 min-w-0">
 																<!-- Thumbnail Foto Produk Pakaian -->
 																<div class="size-8 rounded-md border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center">
-																	{#if it.imageUrl}
-																		<img src={it.imageUrl} alt={it.name} class="size-full object-contain p-0.5" loading="lazy" />
-																	{:else}
-																		<ShirtIcon class="size-3.5 text-muted-foreground/40" />
-																	{/if}
+																	<img
+																		src={it.imageUrl || `/images/real/items/${it.id.startsWith("outer-1") ? "blazer" : it.id.startsWith("outer-2") ? "cardigan" : it.id.startsWith("top-1") ? "shirt" : it.id.startsWith("top-2") ? "blouse" : it.id.startsWith("top-3") ? "tshirt" : it.id.startsWith("top-4") ? "knitwear" : it.id.startsWith("bottom-1") ? "trousers" : it.id.startsWith("bottom-2") ? "denim" : it.id.startsWith("bottom-3") ? "chinos" : it.id.startsWith("shoes-1") ? "sneakers" : it.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
+																		alt={it.name}
+																		class="size-full object-cover"
+																		loading="lazy"
+																	/>
 																</div>
 																<span class="font-medium text-foreground truncate text-xs">{it.name}</span>
 															</div>
@@ -1304,12 +1305,13 @@
 										</button>
 
 										<!-- Foto Thumbnail Item Belanja -->
-										<div class="size-10 rounded-md border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center">
-											{#if item.imageUrl}
-												<img src={item.imageUrl} alt={item.name} class="size-full object-contain p-0.5" loading="lazy" />
-											{:else}
-												<ShirtIcon class="size-4 text-muted-foreground/30" />
-											{/if}
+										<div class="size-11 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center">
+											<img
+												src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
+												alt={item.name}
+												class="size-full object-cover"
+												loading="lazy"
+											/>
 										</div>
 
 										<div class="flex-1 min-w-0">

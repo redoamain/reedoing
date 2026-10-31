@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/state";
 	import { Button } from "$lib/components/ui/button";
 	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
 	import CompassIcon from "@lucide/svelte/icons/compass";
@@ -20,7 +21,7 @@
 		items: { name: string; category: string; img: string }[];
 	}
 
-	const palettes: Record<UndertoneKey, PalettePreview> = {
+	const basePalettes: Record<UndertoneKey, PalettePreview> = {
 		hangat: {
 			key: "hangat",
 			label: "Warm Tone",
@@ -39,9 +40,9 @@
 			lookName: "The Earth Architect",
 			lookOccasion: "Kerja & Meeting",
 			items: [
-				{ name: "Camel Blazer", category: "Outer", img: "/images/placeholder/blazer.svg" },
-				{ name: "Broken White Shirt", category: "Atasan", img: "/images/placeholder/shirt.svg" },
-				{ name: "Espresso Pants", category: "Bawahan", img: "/images/placeholder/trousers.svg" }
+				{ name: "Camel Blazer", category: "Outer", img: "/images/real/items/camel-blazer.jpg" },
+				{ name: "Broken White Shirt", category: "Atasan", img: "/images/real/items/broken-white-shirt.jpg" },
+				{ name: "Espresso Pants", category: "Bawahan", img: "/images/real/items/espresso-trousers.jpg" }
 			]
 		},
 		dingin: {
@@ -62,9 +63,9 @@
 			lookName: "Executive Slate",
 			lookOccasion: "Formal & Bisnis",
 			items: [
-				{ name: "Navy Blazer", category: "Outer", img: "/images/placeholder/blazer.svg" },
-				{ name: "Crisp Oxford Shirt", category: "Atasan", img: "/images/placeholder/shirt.svg" },
-				{ name: "Charcoal Pants", category: "Bawahan", img: "/images/placeholder/trousers.svg" }
+				{ name: "Navy Blazer", category: "Outer", img: "/images/real/items/navy-blazer.jpg" },
+				{ name: "Crisp Oxford Shirt", category: "Atasan", img: "/images/real/items/crisp-oxford-shirt.jpg" },
+				{ name: "Charcoal Pants", category: "Bawahan", img: "/images/real/items/charcoal-pants.jpg" }
 			]
 		},
 		netral: {
@@ -85,14 +86,44 @@
 			lookName: "Minimalist Mineral",
 			lookOccasion: "Smart Casual",
 			items: [
-				{ name: "Graphite Blazer", category: "Outer", img: "/images/placeholder/blazer.svg" },
-				{ name: "Ecru Heavy Tee", category: "Atasan", img: "/images/placeholder/shirt.svg" },
-				{ name: "Taupe Chinos", category: "Bawahan", img: "/images/placeholder/trousers.svg" }
+				{ name: "Graphite Blazer", category: "Outer", img: "/images/real/items/graphite-blazer.jpg" },
+				{ name: "Ecru Heavy Tee", category: "Atasan", img: "/images/real/items/ecru-heavy-tee.jpg" },
+				{ name: "Taupe Chinos", category: "Bawahan", img: "/images/real/items/taupe-chinos.jpg" }
 			]
 		}
 	};
 
+	let heroConfig = $derived(page.data?.siteSettings?.hero);
+
 	let activeTone = $state<UndertoneKey>("hangat");
+
+	$effect(() => {
+		if (heroConfig?.defaultTone && (heroConfig.defaultTone === "hangat" || heroConfig.defaultTone === "dingin" || heroConfig.defaultTone === "netral")) {
+			activeTone = heroConfig.defaultTone;
+		}
+	});
+
+	let palettes = $derived<Record<UndertoneKey, PalettePreview>>({
+		hangat: {
+			...basePalettes.hangat,
+			name: heroConfig?.warmName || basePalettes.hangat.name,
+			desc: heroConfig?.warmDesc || basePalettes.hangat.desc,
+			colors: heroConfig?.warmColors && heroConfig.warmColors.length ? heroConfig.warmColors : basePalettes.hangat.colors
+		},
+		dingin: {
+			...basePalettes.dingin,
+			name: heroConfig?.coolName || basePalettes.dingin.name,
+			desc: heroConfig?.coolDesc || basePalettes.dingin.desc,
+			colors: heroConfig?.coolColors && heroConfig.coolColors.length ? heroConfig.coolColors : basePalettes.dingin.colors
+		},
+		netral: {
+			...basePalettes.netral,
+			name: heroConfig?.neutralName || basePalettes.netral.name,
+			desc: heroConfig?.neutralDesc || basePalettes.netral.desc,
+			colors: heroConfig?.neutralColors && heroConfig.neutralColors.length ? heroConfig.neutralColors : basePalettes.netral.colors
+		}
+	});
+
 	let currentPalette = $derived(palettes[activeTone]);
 </script>
 
@@ -102,12 +133,12 @@
 			<!-- Teks Kiri -->
 			<div class="flex flex-col items-center text-center lg:col-span-6 lg:items-start lg:text-left">
 				<h1 class="font-serif text-3xl font-normal tracking-tight sm:text-5xl lg:text-6xl text-foreground leading-[1.15]">
-					Lebih sedikit pakaian, <br class="hidden sm:inline" />
-					<span class="italic text-foreground font-medium">lebih banyak gaya.</span>
+					{heroConfig?.title1 || "Lebih sedikit pakaian,"} <br class="hidden sm:inline" />
+					<span class="italic text-foreground font-medium">{heroConfig?.title2 || "lebih banyak gaya."}</span>
 				</h1>
 
 				<p class="mt-4 sm:mt-5 max-w-xl text-sm sm:text-base md:text-lg text-stone-700 dark:text-stone-300 leading-relaxed font-normal">
-					Bangun capsule wardrobe fungsional 12 item yang menghasilkan 30+ kombinasi outfit siap pakai. Dirancang personal untuk pria dan wanita berdasarkan undertone urat nadi dan proporsi tubuhmu.
+					{heroConfig?.description || "Bangun capsule wardrobe fungsional 12 item yang menghasilkan 30+ kombinasi outfit siap pakai. Dirancang personal untuk pria dan wanita berdasarkan undertone urat nadi dan proporsi tubuhmu."}
 				</p>
 
 				<div class="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -116,7 +147,7 @@
 						size="lg"
 						class="w-full sm:w-auto gap-2 px-7 text-sm font-semibold bg-stone-900 hover:bg-stone-800 text-white hover:text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-900 dark:hover:text-stone-900 shadow-sm transition-colors"
 					>
-						Mulai Style Check
+						{heroConfig?.ctaText || "Mulai Style Check"}
 						<ArrowRightIcon class="size-4" />
 					</Button>
 					<Button
@@ -126,25 +157,25 @@
 						class="w-full sm:w-auto gap-2 text-xs font-semibold border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground hover:border-foreground/30 transition-all"
 					>
 						<CompassIcon class="size-3.5 text-foreground" />
-						Lihat Contoh Lookbook
+						{heroConfig?.ctaSecondaryText || "Lihat Contoh Lookbook"}
 					</Button>
 				</div>
 				<span class="mt-2.5 sm:mt-3 text-xs text-stone-600 dark:text-stone-400 font-medium">
-					Gratis · Sekitar 3 menit · Langsung siap pakai
+					{heroConfig?.ctaSubtext || "Gratis · Sekitar 3 menit · Langsung siap pakai"}
 				</span>
 
 				<div class="mt-6 sm:mt-8 grid grid-cols-3 gap-2.5 sm:gap-6 border-t border-border/70 pt-5 sm:pt-6 text-center sm:text-left w-full sm:w-auto">
 					<div>
-						<div class="font-serif text-xl sm:text-2xl font-bold text-foreground">12 Item</div>
-						<div class="text-[11px] sm:text-xs text-muted-foreground font-medium mt-0.5">Wardrobe esensial</div>
+						<div class="font-serif text-xl sm:text-2xl font-bold text-foreground">{heroConfig?.stat1Val || "12 Item"}</div>
+						<div class="text-[11px] sm:text-xs text-muted-foreground font-medium mt-0.5">{heroConfig?.stat1Lbl || "Wardrobe esensial"}</div>
 					</div>
 					<div>
-						<div class="font-serif text-xl sm:text-2xl font-bold text-foreground">30+ Look</div>
-						<div class="text-[11px] sm:text-xs text-muted-foreground font-medium mt-0.5">Kombinasi siap pakai</div>
+						<div class="font-serif text-xl sm:text-2xl font-bold text-foreground">{heroConfig?.stat2Val || "30+ Look"}</div>
+						<div class="text-[11px] sm:text-xs text-muted-foreground font-medium mt-0.5">{heroConfig?.stat2Lbl || "Kombinasi siap pakai"}</div>
 					</div>
 					<div>
-						<div class="font-serif text-xl sm:text-2xl font-bold text-foreground">100%</div>
-						<div class="text-[11px] sm:text-xs text-muted-foreground font-medium mt-0.5">Gratis selamanya</div>
+						<div class="font-serif text-xl sm:text-2xl font-bold text-foreground">{heroConfig?.stat3Val || "100%"}</div>
+						<div class="text-[11px] sm:text-xs text-muted-foreground font-medium mt-0.5">{heroConfig?.stat3Lbl || "Gratis selamanya"}</div>
 					</div>
 				</div>
 			</div>
@@ -234,8 +265,8 @@
 							<div class="grid grid-cols-3 gap-2">
 								{#each currentPalette.items as it}
 									<div class="rounded-xl border border-border/70 bg-stone-50 dark:bg-stone-900/40 p-2 text-center transition-all hover:border-foreground/30 hover:bg-stone-100 dark:hover:bg-stone-800/80">
-										<img src={it.img} alt={it.name} class="mx-auto size-11 sm:size-12 object-contain" />
-										<p class="mt-1 text-[11px] font-bold text-foreground leading-tight truncate">{it.name}</p>
+										<img src={it.img} alt={it.name} class="mx-auto size-12 sm:size-14 rounded-lg object-cover shadow-2xs border border-border/70" />
+										<p class="mt-1.5 text-[11px] font-bold text-foreground leading-tight truncate">{it.name}</p>
 										<span class="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground">{it.category}</span>
 									</div>
 								{/each}
@@ -260,7 +291,7 @@
 					<!-- Floating Pill Bawah -->
 					<div class="absolute -bottom-3.5 left-2 sm:-left-3 max-w-[calc(100%-1rem)] rounded-full border border-border bg-card px-3 sm:px-3.5 py-1.5 shadow-sm flex items-center gap-2 text-[11px] sm:text-xs font-semibold text-foreground">
 						<span class="size-2 shrink-0 rounded-full bg-emerald-500"></span>
-						<span class="truncate">Deteksi warna urat nadi pergelangan tangan otomatis</span>
+						<span class="truncate">{heroConfig?.floatingText || "Deteksi warna urat nadi pergelangan tangan otomatis"}</span>
 					</div>
 				</div>
 			</div>

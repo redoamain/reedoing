@@ -147,7 +147,7 @@ export function seedDefaultData() {
 							it.styleTips,
 							JSON.stringify(it.itemIds),
 							it.affiliateUrl || null,
-							it.imageUrl || `/images/looks/${it.id}.svg`,
+							it.imageUrl || `/images/real/looks/${it.id}.jpg`,
 							i + 1,
 							now,
 							now

@@ -38,6 +38,13 @@
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 	import UploadIcon from "@lucide/svelte/icons/upload";
 	import PanelLeftIcon from "@lucide/svelte/icons/panel-left";
+	import SparklesIcon from "@lucide/svelte/icons/sparkles";
+	import PaletteIcon from "@lucide/svelte/icons/palette";
+	import TypeIcon from "@lucide/svelte/icons/type";
+	import EyeIcon from "@lucide/svelte/icons/eye";
+	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
+	import CompassIcon from "@lucide/svelte/icons/compass";
+	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
 	import { toggleMode, mode } from "mode-watcher";
 
 	import type { PageData } from "./$types";
@@ -45,9 +52,164 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// Default color palettes definitions
+	const defaultWarmColors = [
+		{ name: "Broken White", hex: "#F9F6F0", role: "base" as const },
+		{ name: "Oat Camel", hex: "#C2A27E", role: "base" as const },
+		{ name: "Espresso Brown", hex: "#3D2B1F", role: "base" as const },
+		{ name: "Deep Olive", hex: "#4E5340", role: "base" as const },
+		{ name: "Terracotta", hex: "#B85D43", role: "accent" as const },
+		{ name: "Warm Amber", hex: "#D49B4B", role: "accent" as const }
+	];
+
+	const defaultCoolColors = [
+		{ name: "Crisp White", hex: "#FFFFFF", role: "base" as const },
+		{ name: "Classic Navy", hex: "#1B2A47", role: "base" as const },
+		{ name: "Charcoal Grey", hex: "#33383F", role: "base" as const },
+		{ name: "Heather Fog", hex: "#CBD2D9", role: "base" as const },
+		{ name: "Slate Blue", hex: "#4D6B88", role: "accent" as const },
+		{ name: "Deep Burgundy", hex: "#6B1D2F", role: "accent" as const }
+	];
+
+	const defaultNeutralColors = [
+		{ name: "Soft Ecru", hex: "#F5F2EB", role: "base" as const },
+		{ name: "Midnight Graphite", hex: "#26292E", role: "base" as const },
+		{ name: "Smokey Taupe", hex: "#7A7265", role: "base" as const },
+		{ name: "French Navy", hex: "#202E42", role: "base" as const },
+		{ name: "Muted Sage", hex: "#768B75", role: "accent" as const },
+		{ name: "Rosewood Mauve", hex: "#9B6A6C", role: "accent" as const }
+	];
+
+	function parsePaletteColors(jsonStr?: string, fallback: typeof defaultWarmColors = defaultWarmColors) {
+		if (!jsonStr) return JSON.parse(JSON.stringify(fallback));
+		try {
+			const parsed = JSON.parse(jsonStr);
+			if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+		} catch {
+			// fallback
+		}
+		return JSON.parse(JSON.stringify(fallback));
+	}
+
 	// State active tab navigasi sidebar
-	let adminTab = $state<"outfits" | "items" | "settings">("outfits");
+	let adminTab = $state<"outfits" | "items" | "hero" | "settings">("outfits");
 	let mobileSidebarOpen = $state(false);
+
+	// State Hero Editor & Live Preview
+	let heroTitle1 = $state("Lebih sedikit pakaian,");
+	let heroTitle2 = $state("lebih banyak gaya.");
+	let heroDescription = $state(
+		"Bangun capsule wardrobe fungsional 12 item yang menghasilkan 30+ kombinasi outfit siap pakai. Dirancang personal untuk pria dan wanita berdasarkan undertone urat nadi dan proporsi tubuhmu."
+	);
+	let heroCtaText = $state("Mulai Style Check");
+	let heroCtaSecondaryText = $state("Lihat Contoh Lookbook");
+	let heroCtaSubtext = $state("Gratis · Sekitar 3 menit · Langsung siap pakai");
+	let heroFloatingText = $state("Deteksi warna urat nadi pergelangan tangan otomatis");
+	let heroStat1Val = $state("12 Item");
+	let heroStat1Lbl = $state("Wardrobe esensial");
+	let heroStat2Val = $state("30+ Look");
+	let heroStat2Lbl = $state("Kombinasi siap pakai");
+	let heroStat3Val = $state("100%");
+	let heroStat3Lbl = $state("Gratis selamanya");
+
+	// Tone Color States
+	let heroDefaultTone = $state<"hangat" | "dingin" | "netral">("hangat");
+	let heroEditorSubTab = $state<"words" | "tones">("words");
+	let toneEditorTab = $state<"hangat" | "dingin" | "netral">("hangat");
+	let previewTone = $state<"hangat" | "dingin" | "netral">("hangat");
+
+	let warmName = $state("Warm Earth & Sun");
+	let warmDesc = $state("Nuansa bumi hangat: broken white, camel, espresso, dan aksen terracotta.");
+	let warmColors = $state(JSON.parse(JSON.stringify(defaultWarmColors)));
+
+	let coolName = $state("Cool Slate & Coastal");
+	let coolDesc = $state("Nuansa sejuk berkelas: pure white, classic navy, charcoal, dan slate blue.");
+	let coolColors = $state(JSON.parse(JSON.stringify(defaultCoolColors)));
+
+	let neutralName = $state("Neutral Mineral & Stone");
+	let neutralDesc = $state("Nuansa netral seimbang: soft ecru, midnight graphite, taupe, dan sage green.");
+	let neutralColors = $state(JSON.parse(JSON.stringify(defaultNeutralColors)));
+
+	let isResetHeroDialogOpen = $state(false);
+
+	$effect(() => {
+		if (data.settings.hero_title_1 !== undefined) heroTitle1 = data.settings.hero_title_1;
+		if (data.settings.hero_title_2 !== undefined) heroTitle2 = data.settings.hero_title_2;
+		if (data.settings.hero_description !== undefined) heroDescription = data.settings.hero_description;
+		if (data.settings.hero_cta_text !== undefined) heroCtaText = data.settings.hero_cta_text;
+		if (data.settings.hero_cta_secondary_text !== undefined) heroCtaSecondaryText = data.settings.hero_cta_secondary_text;
+		if (data.settings.hero_cta_subtext !== undefined) heroCtaSubtext = data.settings.hero_cta_subtext;
+		if (data.settings.hero_floating_text !== undefined) heroFloatingText = data.settings.hero_floating_text;
+		if (data.settings.hero_stat_1_val !== undefined) heroStat1Val = data.settings.hero_stat_1_val;
+		if (data.settings.hero_stat_1_lbl !== undefined) heroStat1Lbl = data.settings.hero_stat_1_lbl;
+		if (data.settings.hero_stat_2_val !== undefined) heroStat2Val = data.settings.hero_stat_2_val;
+		if (data.settings.hero_stat_2_lbl !== undefined) heroStat2Lbl = data.settings.hero_stat_2_lbl;
+		if (data.settings.hero_stat_3_val !== undefined) heroStat3Val = data.settings.hero_stat_3_val;
+		if (data.settings.hero_stat_3_lbl !== undefined) heroStat3Lbl = data.settings.hero_stat_3_lbl;
+		if (data.settings.hero_default_tone && ["hangat", "dingin", "netral"].includes(data.settings.hero_default_tone)) {
+			heroDefaultTone = data.settings.hero_default_tone as any;
+			previewTone = data.settings.hero_default_tone as any;
+		}
+		if (data.settings.hero_tone_warm_name !== undefined) warmName = data.settings.hero_tone_warm_name;
+		if (data.settings.hero_tone_warm_desc !== undefined) warmDesc = data.settings.hero_tone_warm_desc;
+		if (data.settings.hero_tone_warm_colors) warmColors = parsePaletteColors(data.settings.hero_tone_warm_colors, defaultWarmColors);
+		if (data.settings.hero_tone_cool_name !== undefined) coolName = data.settings.hero_tone_cool_name;
+		if (data.settings.hero_tone_cool_desc !== undefined) coolDesc = data.settings.hero_tone_cool_desc;
+		if (data.settings.hero_tone_cool_colors) coolColors = parsePaletteColors(data.settings.hero_tone_cool_colors, defaultCoolColors);
+		if (data.settings.hero_tone_neutral_name !== undefined) neutralName = data.settings.hero_tone_neutral_name;
+		if (data.settings.hero_tone_neutral_desc !== undefined) neutralDesc = data.settings.hero_tone_neutral_desc;
+		if (data.settings.hero_tone_neutral_colors) neutralColors = parsePaletteColors(data.settings.hero_tone_neutral_colors, defaultNeutralColors);
+	});
+
+	// Computed preview palette
+	let currentPreviewPalette = $derived.by(() => {
+		if (previewTone === "hangat") {
+			return {
+				name: warmName,
+				label: "Warm Tone",
+				veinText: "Urat nadi kehijauan",
+				desc: warmDesc,
+				colors: warmColors,
+				lookFormula: "Blazer Camel + Kemeja Broken White + Trousers Espresso",
+				lookName: "The Earth Architect",
+				items: [
+					{ name: "Camel Blazer", category: "Outer", img: "/images/placeholder/blazer.svg" },
+					{ name: "Broken White Shirt", category: "Atasan", img: "/images/placeholder/shirt.svg" },
+					{ name: "Espresso Pants", category: "Bawahan", img: "/images/placeholder/trousers.svg" }
+				]
+			};
+		} else if (previewTone === "dingin") {
+			return {
+				name: coolName,
+				label: "Cool Tone",
+				veinText: "Urat nadi kebiruan / ungu",
+				desc: coolDesc,
+				colors: coolColors,
+				lookFormula: "Navy Blazer + Kemeja Crisp White + Charcoal Pants",
+				lookName: "Executive Slate",
+				items: [
+					{ name: "Navy Blazer", category: "Outer", img: "/images/placeholder/blazer.svg" },
+					{ name: "Crisp Oxford Shirt", category: "Atasan", img: "/images/placeholder/shirt.svg" },
+					{ name: "Charcoal Pants", category: "Bawahan", img: "/images/placeholder/trousers.svg" }
+				]
+			};
+		} else {
+			return {
+				name: neutralName,
+				label: "Neutral Tone",
+				veinText: "Urat nadi campuran (biru & hijau)",
+				desc: neutralDesc,
+				colors: neutralColors,
+				lookFormula: "Graphite Blazer + Ecru Heavy Tee + Taupe Chinos",
+				lookName: "Minimalist Mineral",
+				items: [
+					{ name: "Graphite Blazer", category: "Outer", img: "/images/placeholder/blazer.svg" },
+					{ name: "Ecru Heavy Tee", category: "Atasan", img: "/images/placeholder/shirt.svg" },
+					{ name: "Taupe Chinos", category: "Bawahan", img: "/images/placeholder/trousers.svg" }
+				]
+			};
+		}
+	});
 
 	// State filter outfit
 	let selectedOccasion = $state<string>("semua");
@@ -315,6 +477,31 @@
 		<SidebarUI.SidebarSeparator />
 
 		<SidebarUI.SidebarGroup>
+			<SidebarUI.SidebarGroupLabel>Tampilan & Beranda</SidebarUI.SidebarGroupLabel>
+			<SidebarUI.SidebarGroupContent>
+				<SidebarUI.SidebarMenu>
+					<SidebarUI.SidebarMenuItem>
+						<SidebarUI.SidebarMenuButton
+							isActive={adminTab === "hero"}
+							onclick={() => {
+								adminTab = "hero";
+								mobileSidebarOpen = false;
+							}}
+						>
+							<SparklesIcon class="size-4 shrink-0 text-amber-500" />
+							<span class="flex-1 truncate">Hero & Tone Color</span>
+							<SidebarUI.SidebarMenuBadge class="bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-200 text-[10px]">
+								{heroDefaultTone === 'hangat' ? 'Warm' : heroDefaultTone === 'dingin' ? 'Cool' : 'Netral'}
+							</SidebarUI.SidebarMenuBadge>
+						</SidebarUI.SidebarMenuButton>
+					</SidebarUI.SidebarMenuItem>
+				</SidebarUI.SidebarMenu>
+			</SidebarUI.SidebarGroupContent>
+		</SidebarUI.SidebarGroup>
+
+		<SidebarUI.SidebarSeparator />
+
+		<SidebarUI.SidebarGroup>
 			<SidebarUI.SidebarGroupLabel>Pengaturan Sistem</SidebarUI.SidebarGroupLabel>
 			<SidebarUI.SidebarGroupContent>
 				<SidebarUI.SidebarMenu>
@@ -429,6 +616,7 @@
 					<span class="font-bold text-foreground truncate">
 						{#if adminTab === 'outfits'}Katalog Outfit
 						{:else if adminTab === 'items'}Item Belanja
+						{:else if adminTab === 'hero'}Hero & Tone Color
 						{:else}Pengaturan Website & Akun{/if}
 					</span>
 				</div>
@@ -650,16 +838,16 @@
 					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{#each filteredOutfits as outfit, idx (outfit.id)}
 							{@const hasAffiliate = Boolean(outfit.affiliateUrl?.trim())}
-							{@const adminImg = outfit.imageUrl || `/images/looks/${outfit.id}.svg`}
+							{@const adminImg = outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
 							<Card class="border-border bg-card overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
 								<div>
 									<!-- Image preview -->
 									{#if adminImg}
-										<div class="relative h-40 w-full overflow-hidden bg-muted/30 border-b border-border">
+										<div class="relative h-44 w-full overflow-hidden bg-muted/30 border-b border-border">
 											<img
 												src={adminImg}
 												alt={outfit.name}
-												class="h-full w-full object-contain p-1.5 transition-transform duration-300 hover:scale-102"
+												class="h-full w-full object-cover transition-transform duration-300 hover:scale-102"
 												loading="lazy"
 											/>
 										</div>
@@ -698,7 +886,7 @@
 												{#if itObj}
 													<span class="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border/80 px-2 py-0.5 text-[10px] text-foreground font-medium shadow-2xs">
 														{#if itObj.imageUrl}
-															<img src={itObj.imageUrl} alt={itObj.name} class="size-3.5 rounded-xs object-contain" />
+															<img src={itObj.imageUrl} alt={itObj.name} class="size-3.5 rounded-xs object-cover" />
 														{/if}
 														<span class="truncate max-w-[120px]">{itObj.name}</span>
 													</span>
@@ -850,7 +1038,7 @@
 									<!-- Foto Thumbnail Produk Pakaian -->
 									<div class="size-14 rounded-xl border border-border/80 bg-muted/30 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 										{#if item.imageUrl}
-											<img src={item.imageUrl} alt={item.name} class="size-full object-contain p-1" />
+											<img src={item.imageUrl} alt={item.name} class="size-full object-cover" />
 										{:else}
 											<ShirtIcon class="size-6 text-muted-foreground/30" />
 										{/if}
@@ -915,7 +1103,792 @@
 			</Tabs.Content>
 
 			<!-- ========================================== -->
-			<!-- TAB 3: PENGATURAN SHOPEE GLOBAL & TIPS -->
+			<!-- TAB 3: KUSTOMISASI HERO & TONE COLOR -->
+			<!-- ========================================== -->
+			<Tabs.Content value="hero" class="space-y-6">
+				<!-- Header Section -->
+				<div class="rounded-xl border border-border/80 bg-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+					<div class="space-y-1">
+						<div class="flex items-center gap-2">
+							<span class="inline-flex size-6 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+								<SparklesIcon class="size-4" />
+							</span>
+							<h2 class="font-serif text-xl font-normal text-foreground">Pengaturan Hero & Tone Color</h2>
+						</div>
+						<p class="text-xs text-muted-foreground">
+							Kustomisasi kata-kata headline, deskripsi, tombol CTA, serta tentukan tone color (Warm, Cool, Netral) dan palet warna yang tampil di Hero beranda.
+						</p>
+					</div>
+
+					<div class="flex items-center gap-2 shrink-0">
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => (isResetHeroDialogOpen = true)}
+							class="gap-1.5 text-xs font-semibold border-border/80 text-foreground hover:bg-muted hover:text-foreground"
+						>
+							<RotateCcwIcon class="size-3.5 text-muted-foreground" />
+							<span>Reset ke Standar</span>
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							href="/"
+							target="_blank"
+							class="gap-1.5 text-xs font-semibold border-border/80 text-foreground hover:bg-muted hover:text-foreground"
+						>
+							<GlobeIcon class="size-3.5 text-muted-foreground" />
+							<span>Lihat di Beranda</span>
+							<ExternalLinkIcon class="size-3 opacity-60" />
+						</Button>
+					</div>
+				</div>
+
+				<!-- Grid Utama: Form Editor (Kiri) & Live Preview (Kanan) -->
+				<div class="grid gap-6 xl:grid-cols-12 items-start">
+					<!-- KOLOM KIRI: FORM EDITOR -->
+					<div class="xl:col-span-7 space-y-6">
+						<form
+							action="?/saveHeroSettings"
+							method="POST"
+							use:enhance={() => {
+								return async ({ update, result }) => {
+									await update();
+									if (result.type === "success") {
+										toast.success("Pengaturan teks Hero & Tone Color berhasil disimpan!");
+									} else {
+										toast.error("Gagal menyimpan pengaturan Hero.");
+									}
+								};
+							}}
+							class="space-y-6"
+						>
+							<!-- Hidden fields untuk data JSON warna tone & default tone -->
+							<input type="hidden" name="hero_default_tone" value={heroDefaultTone} />
+							<input type="hidden" name="hero_tone_warm_colors" value={JSON.stringify(warmColors)} />
+							<input type="hidden" name="hero_tone_cool_colors" value={JSON.stringify(coolColors)} />
+							<input type="hidden" name="hero_tone_neutral_colors" value={JSON.stringify(neutralColors)} />
+
+							<!-- Sub-Tabs Selector Editor: Kata-kata vs Tone Color -->
+							<div class="flex items-center gap-2 p-1 rounded-xl bg-stone-100 dark:bg-stone-900 border border-border">
+								<button
+									type="button"
+									onclick={() => (heroEditorSubTab = "words")}
+									class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all {heroEditorSubTab === 'words' ? 'bg-background text-foreground shadow-xs border border-border/70' : 'text-muted-foreground hover:text-foreground'}"
+								>
+									<TypeIcon class="size-3.5" />
+									<span>Kata-Kata Hero</span>
+								</button>
+								<button
+									type="button"
+									onclick={() => (heroEditorSubTab = "tones")}
+									class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all {heroEditorSubTab === 'tones' ? 'bg-background text-foreground shadow-xs border border-border/70' : 'text-muted-foreground hover:text-foreground'}"
+								>
+									<PaletteIcon class="size-3.5" />
+									<span>Penentuan Tone Color</span>
+								</button>
+							</div>
+
+							<!-- TAB SUB 1: KATA-KATA HERO -->
+							{#if heroEditorSubTab === "words"}
+								<!-- Kartu 1: Headline & Copywriting Utama -->
+								<Card class="border-border shadow-xs">
+									<CardHeader class="pb-3">
+										<CardTitle class="font-serif text-base font-bold flex items-center gap-2">
+											<TypeIcon class="size-4 text-primary" />
+											Headline & Teks Utama
+										</CardTitle>
+										<CardDescription class="text-xs">
+											Teks judul besar dan paragraf deskripsi value proposition di Hero section.
+										</CardDescription>
+									</CardHeader>
+									<CardContent class="space-y-4 pt-1">
+										<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+											<div class="space-y-1.5">
+												<Label for="hero_title_1" class="text-xs font-semibold">Judul Baris 1</Label>
+												<Input
+													id="hero_title_1"
+													name="hero_title_1"
+													type="text"
+													bind:value={heroTitle1}
+													placeholder="Lebih sedikit pakaian,"
+													class="text-xs"
+													required
+												/>
+												<p class="text-[10px] text-muted-foreground">Teks baris pertama headline.</p>
+											</div>
+
+											<div class="space-y-1.5">
+												<Label for="hero_title_2" class="text-xs font-semibold">Judul Baris 2 (Aksen / Italic)</Label>
+												<Input
+													id="hero_title_2"
+													name="hero_title_2"
+													type="text"
+													bind:value={heroTitle2}
+													placeholder="lebih banyak gaya."
+													class="text-xs font-medium italic"
+													required
+												/>
+												<p class="text-[10px] text-muted-foreground">Teks baris kedua berformat miring elegan.</p>
+											</div>
+										</div>
+
+										<div class="space-y-1.5">
+											<Label for="hero_description" class="text-xs font-semibold">Paragraf Deskripsi Hero</Label>
+											<textarea
+												id="hero_description"
+												name="hero_description"
+												rows="3"
+												bind:value={heroDescription}
+												placeholder="Tuliskan deskripsi ringkas dan memikat mengenai capsule wardrobe..."
+												class="w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-xs shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+												required
+											></textarea>
+											<p class="text-[10px] text-muted-foreground">Penjelasan singkat di bawah headline yang memandu pengguna mengambil tes gaya.</p>
+										</div>
+									</CardContent>
+								</Card>
+
+								<!-- Kartu 2: Tombol CTA & Jaminan -->
+								<Card class="border-border shadow-xs">
+									<CardHeader class="pb-3">
+										<CardTitle class="font-serif text-base font-bold flex items-center gap-2">
+											<ArrowRightIcon class="size-4 text-primary" />
+											Tombol Aksi (CTA) & Catatan
+										</CardTitle>
+										<CardDescription class="text-xs">
+											Sesuaikan label tombol navigasi dan teks penjelas di bawah tombol.
+										</CardDescription>
+									</CardHeader>
+									<CardContent class="space-y-4 pt-1">
+										<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+											<div class="space-y-1.5">
+												<Label for="hero_cta_text" class="text-xs font-semibold">Teks Tombol Utama</Label>
+												<Input
+													id="hero_cta_text"
+													name="hero_cta_text"
+													type="text"
+													bind:value={heroCtaText}
+													placeholder="Mulai Style Check"
+													class="text-xs font-semibold"
+													required
+												/>
+											</div>
+
+											<div class="space-y-1.5">
+												<Label for="hero_cta_secondary_text" class="text-xs font-semibold">Teks Tombol Sekunder (Lookbook)</Label>
+												<Input
+													id="hero_cta_secondary_text"
+													name="hero_cta_secondary_text"
+													type="text"
+													bind:value={heroCtaSecondaryText}
+													placeholder="Lihat Contoh Lookbook"
+													class="text-xs"
+													required
+												/>
+											</div>
+										</div>
+
+										<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+											<div class="space-y-1.5">
+												<Label for="hero_cta_subtext" class="text-xs font-semibold">Subteks / Jaminan di Bawah Tombol</Label>
+												<Input
+													id="hero_cta_subtext"
+													name="hero_cta_subtext"
+													type="text"
+													bind:value={heroCtaSubtext}
+													placeholder="Gratis · Sekitar 3 menit · Langsung siap pakai"
+													class="text-xs"
+												/>
+												<p class="text-[10px] text-muted-foreground">Menghilangkan keraguan pengunjung untuk mencoba.</p>
+											</div>
+
+											<div class="space-y-1.5">
+												<Label for="hero_floating_text" class="text-xs font-semibold">Teks Badge / Floating Pill</Label>
+												<Input
+													id="hero_floating_text"
+													name="hero_floating_text"
+													type="text"
+													bind:value={heroFloatingText}
+													placeholder="Deteksi warna urat nadi pergelangan tangan otomatis"
+													class="text-xs"
+												/>
+												<p class="text-[10px] text-muted-foreground">Teks pada pill melayang di bawah kartu palet hero.</p>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<!-- Kartu 3: Tiga Kolom Statistik Hero -->
+								<Card class="border-border shadow-xs">
+									<CardHeader class="pb-3">
+										<CardTitle class="font-serif text-base font-bold flex items-center gap-2">
+											<SlidersHorizontalIcon class="size-4 text-primary" />
+											3 Angka Statistik Hero
+										</CardTitle>
+										<CardDescription class="text-xs">
+											Tiga metrik kunci yang membuktikan efisiensi sistem capsule wardrobe.
+										</CardDescription>
+									</CardHeader>
+									<CardContent class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+										<div class="rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-3 space-y-2">
+											<span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Statistik 1</span>
+											<Input
+												name="hero_stat_1_val"
+												bind:value={heroStat1Val}
+												placeholder="12 Item"
+												class="text-xs font-serif font-bold bg-background"
+											/>
+											<Input
+												name="hero_stat_1_lbl"
+												bind:value={heroStat1Lbl}
+												placeholder="Wardrobe esensial"
+												class="text-[11px] bg-background text-muted-foreground"
+											/>
+										</div>
+
+										<div class="rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-3 space-y-2">
+											<span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Statistik 2</span>
+											<Input
+												name="hero_stat_2_val"
+												bind:value={heroStat2Val}
+												placeholder="30+ Look"
+												class="text-xs font-serif font-bold bg-background"
+											/>
+											<Input
+												name="hero_stat_2_lbl"
+												bind:value={heroStat2Lbl}
+												placeholder="Kombinasi siap pakai"
+												class="text-[11px] bg-background text-muted-foreground"
+											/>
+										</div>
+
+										<div class="rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-3 space-y-2">
+											<span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Statistik 3</span>
+											<Input
+												name="hero_stat_3_val"
+												bind:value={heroStat3Val}
+												placeholder="100%"
+												class="text-xs font-serif font-bold bg-background"
+											/>
+											<Input
+												name="hero_stat_3_lbl"
+												bind:value={heroStat3Lbl}
+												placeholder="Gratis selamanya"
+												class="text-[11px] bg-background text-muted-foreground"
+											/>
+										</div>
+									</CardContent>
+								</Card>
+							{:else}
+								<!-- TAB SUB 2: PENENTUAN TONE COLOR -->
+								<!-- KARTU A: PILIHAN DEFAULT TONE HERO -->
+								<Card class="border-border shadow-xs">
+									<CardHeader class="pb-3">
+										<CardTitle class="font-serif text-base font-bold flex items-center gap-2">
+											<PaletteIcon class="size-4 text-primary" />
+											Menentukan Default Tone Color
+										</CardTitle>
+										<CardDescription class="text-xs">
+											Tentukan undertone mana yang langsung aktif dan terpilih pertama kali saat pengunjung membuka halaman utama.
+										</CardDescription>
+									</CardHeader>
+									<CardContent class="space-y-3 pt-1">
+										<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+											<!-- Warm Tone -->
+											<button
+												type="button"
+												onclick={() => {
+													heroDefaultTone = "hangat";
+													previewTone = "hangat";
+													toneEditorTab = "hangat";
+												}}
+												class="flex flex-col text-left p-3.5 rounded-xl border transition-all {heroDefaultTone === 'hangat' ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 ring-2 ring-amber-500/20' : 'border-border bg-card hover:bg-stone-50 dark:hover:bg-stone-900'}"
+											>
+												<div class="flex items-center justify-between w-full">
+													<span class="text-xs font-bold text-foreground flex items-center gap-1.5">
+														<span>☀️ Warm Tone</span>
+													</span>
+													{#if heroDefaultTone === "hangat"}
+														<CheckCircle2Icon class="size-4 text-amber-500 shrink-0" />
+													{/if}
+												</div>
+												<span class="text-[11px] text-muted-foreground mt-1">Urat nadi kehijauan</span>
+												<div class="mt-2.5 flex items-center gap-1">
+													{#each warmColors.slice(0, 5) as c}
+														<span class="size-3.5 rounded-full border border-black/15 shadow-2xs" style="background-color: {c.hex}"></span>
+													{/each}
+												</div>
+											</button>
+
+											<!-- Cool Tone -->
+											<button
+												type="button"
+												onclick={() => {
+													heroDefaultTone = "dingin";
+													previewTone = "dingin";
+													toneEditorTab = "dingin";
+												}}
+												class="flex flex-col text-left p-3.5 rounded-xl border transition-all {heroDefaultTone === 'dingin' ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 ring-2 ring-sky-500/20' : 'border-border bg-card hover:bg-stone-50 dark:hover:bg-stone-900'}"
+											>
+												<div class="flex items-center justify-between w-full">
+													<span class="text-xs font-bold text-foreground flex items-center gap-1.5">
+														<span>❄️ Cool Tone</span>
+													</span>
+													{#if heroDefaultTone === "dingin"}
+														<CheckCircle2Icon class="size-4 text-sky-500 shrink-0" />
+													{/if}
+												</div>
+												<span class="text-[11px] text-muted-foreground mt-1">Urat nadi kebiruan</span>
+												<div class="mt-2.5 flex items-center gap-1">
+													{#each coolColors.slice(0, 5) as c}
+														<span class="size-3.5 rounded-full border border-black/15 shadow-2xs" style="background-color: {c.hex}"></span>
+													{/each}
+												</div>
+											</button>
+
+											<!-- Neutral Tone -->
+											<button
+												type="button"
+												onclick={() => {
+													heroDefaultTone = "netral";
+													previewTone = "netral";
+													toneEditorTab = "netral";
+												}}
+												class="flex flex-col text-left p-3.5 rounded-xl border transition-all {heroDefaultTone === 'netral' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-emerald-500/20' : 'border-border bg-card hover:bg-stone-50 dark:hover:bg-stone-900'}"
+											>
+												<div class="flex items-center justify-between w-full">
+													<span class="text-xs font-bold text-foreground flex items-center gap-1.5">
+														<span>⚖️ Neutral Tone</span>
+													</span>
+													{#if heroDefaultTone === "netral"}
+														<CheckCircle2Icon class="size-4 text-emerald-500 shrink-0" />
+													{/if}
+												</div>
+												<span class="text-[11px] text-muted-foreground mt-1">Urat nadi campuran</span>
+												<div class="mt-2.5 flex items-center gap-1">
+													{#each neutralColors.slice(0, 5) as c}
+														<span class="size-3.5 rounded-full border border-black/15 shadow-2xs" style="background-color: {c.hex}"></span>
+													{/each}
+												</div>
+											</button>
+										</div>
+									</CardContent>
+								</Card>
+
+								<!-- KARTU B: EDITOR WARNA PALET PER TONE -->
+								<Card class="border-border shadow-xs">
+									<CardHeader class="pb-3">
+										<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+											<div>
+												<CardTitle class="font-serif text-base font-bold flex items-center gap-2">
+													<SlidersHorizontalIcon class="size-4 text-primary" />
+													Kustomisasi Swatch & Palet Tone Color
+												</CardTitle>
+												<CardDescription class="text-xs">
+													Pilih tone di bawah untuk mengubah kode warna hex dan nama warna 6 swatch esensial.
+												</CardDescription>
+											</div>
+
+											<!-- Switcher Tone yang sedang diedit -->
+											<div class="flex items-center gap-1 p-1 rounded-lg bg-stone-100 dark:bg-stone-800 border border-border/70 shrink-0">
+												<button
+													type="button"
+													onclick={() => {
+														toneEditorTab = "hangat";
+														previewTone = "hangat";
+													}}
+													class="rounded-md py-1 px-2.5 text-xs transition-all {toneEditorTab === 'hangat' ? 'bg-background shadow-xs font-bold text-foreground border border-border/60' : 'text-stone-700 dark:text-stone-300 font-medium'}"
+												>
+													Warm
+												</button>
+												<button
+													type="button"
+													onclick={() => {
+														toneEditorTab = "dingin";
+														previewTone = "dingin";
+													}}
+													class="rounded-md py-1 px-2.5 text-xs transition-all {toneEditorTab === 'dingin' ? 'bg-background shadow-xs font-bold text-foreground border border-border/60' : 'text-stone-700 dark:text-stone-300 font-medium'}"
+												>
+													Cool
+												</button>
+												<button
+													type="button"
+													onclick={() => {
+														toneEditorTab = "netral";
+														previewTone = "netral";
+													}}
+													class="rounded-md py-1 px-2.5 text-xs transition-all {toneEditorTab === 'netral' ? 'bg-background shadow-xs font-bold text-foreground border border-border/60' : 'text-stone-700 dark:text-stone-300 font-medium'}"
+												>
+													Neutral
+												</button>
+											</div>
+										</div>
+									</CardHeader>
+
+									<CardContent class="space-y-4 pt-1">
+										{#if toneEditorTab === "hangat"}
+											<!-- Info Palet Warm -->
+											<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+												<div class="space-y-1.5">
+													<Label for="hero_tone_warm_name" class="text-xs font-semibold">Nama Palet Warm Tone</Label>
+													<Input
+														id="hero_tone_warm_name"
+														name="hero_tone_warm_name"
+														type="text"
+														bind:value={warmName}
+														placeholder="Warm Earth & Sun"
+														class="text-xs"
+													/>
+												</div>
+												<div class="space-y-1.5">
+													<Label for="hero_tone_warm_desc" class="text-xs font-semibold">Deskripsi Nuansa Warna</Label>
+													<Input
+														id="hero_tone_warm_desc"
+														name="hero_tone_warm_desc"
+														type="text"
+														bind:value={warmDesc}
+														placeholder="Nuansa bumi hangat: broken white, camel, espresso..."
+														class="text-xs"
+													/>
+												</div>
+											</div>
+
+											<!-- 6 Color Swatches Editor Warm -->
+											<div class="space-y-2 pt-2">
+												<Label class="text-xs font-semibold text-foreground flex items-center justify-between">
+													<span>6 Warna Kunci (4 Dasar + 2 Aksen)</span>
+													<button
+														type="button"
+														onclick={() => (warmColors = JSON.parse(JSON.stringify(defaultWarmColors)))}
+														class="text-[11px] font-medium text-muted-foreground hover:text-foreground underline"
+													>
+														Reset Warna Warm
+													</button>
+												</Label>
+
+												<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+													{#each warmColors as col, i}
+														<div class="flex items-center gap-2 p-2 rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30">
+															<input
+																type="color"
+																bind:value={col.hex}
+																class="size-8 rounded-lg border border-black/15 dark:border-white/20 cursor-pointer shrink-0 p-0 bg-transparent"
+																title="Pilih warna swatch"
+															/>
+															<div class="min-w-0 flex-1 grid grid-cols-2 gap-1.5">
+																<Input
+																	type="text"
+																	bind:value={col.name}
+																	placeholder="Nama warna"
+																	class="text-xs h-7 px-2"
+																/>
+																<Input
+																	type="text"
+																	bind:value={col.hex}
+																	placeholder="#HEX"
+																	class="text-xs h-7 px-2 font-mono uppercase"
+																/>
+															</div>
+															<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border {i < 4 ? 'bg-secondary text-foreground' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'} shrink-0">
+																{i < 4 ? 'Base' : 'Aksen'}
+															</span>
+														</div>
+													{/each}
+												</div>
+											</div>
+										{:else if toneEditorTab === "dingin"}
+											<!-- Info Palet Cool -->
+											<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+												<div class="space-y-1.5">
+													<Label for="hero_tone_cool_name" class="text-xs font-semibold">Nama Palet Cool Tone</Label>
+													<Input
+														id="hero_tone_cool_name"
+														name="hero_tone_cool_name"
+														type="text"
+														bind:value={coolName}
+														placeholder="Cool Slate & Coastal"
+														class="text-xs"
+													/>
+												</div>
+												<div class="space-y-1.5">
+													<Label for="hero_tone_cool_desc" class="text-xs font-semibold">Deskripsi Nuansa Warna</Label>
+													<Input
+														id="hero_tone_cool_desc"
+														name="hero_tone_cool_desc"
+														type="text"
+														bind:value={coolDesc}
+														placeholder="Nuansa sejuk berkelas: pure white, classic navy..."
+														class="text-xs"
+													/>
+												</div>
+											</div>
+
+											<!-- 6 Color Swatches Editor Cool -->
+											<div class="space-y-2 pt-2">
+												<Label class="text-xs font-semibold text-foreground flex items-center justify-between">
+													<span>6 Warna Kunci (4 Dasar + 2 Aksen)</span>
+													<button
+														type="button"
+														onclick={() => (coolColors = JSON.parse(JSON.stringify(defaultCoolColors)))}
+														class="text-[11px] font-medium text-muted-foreground hover:text-foreground underline"
+													>
+														Reset Warna Cool
+													</button>
+												</Label>
+
+												<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+													{#each coolColors as col, i}
+														<div class="flex items-center gap-2 p-2 rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30">
+															<input
+																type="color"
+																bind:value={col.hex}
+																class="size-8 rounded-lg border border-black/15 dark:border-white/20 cursor-pointer shrink-0 p-0 bg-transparent"
+																title="Pilih warna swatch"
+															/>
+															<div class="min-w-0 flex-1 grid grid-cols-2 gap-1.5">
+																<Input
+																	type="text"
+																	bind:value={col.name}
+																	placeholder="Nama warna"
+																	class="text-xs h-7 px-2"
+																/>
+																<Input
+																	type="text"
+																	bind:value={col.hex}
+																	placeholder="#HEX"
+																	class="text-xs h-7 px-2 font-mono uppercase"
+																/>
+															</div>
+															<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border {i < 4 ? 'bg-secondary text-foreground' : 'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300'} shrink-0">
+																{i < 4 ? 'Base' : 'Aksen'}
+															</span>
+														</div>
+													{/each}
+												</div>
+											</div>
+										{:else}
+											<!-- Info Palet Neutral -->
+											<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+												<div class="space-y-1.5">
+													<Label for="hero_tone_neutral_name" class="text-xs font-semibold">Nama Palet Neutral Tone</Label>
+													<Input
+														id="hero_tone_neutral_name"
+														name="hero_tone_neutral_name"
+														type="text"
+														bind:value={neutralName}
+														placeholder="Neutral Mineral & Stone"
+														class="text-xs"
+													/>
+												</div>
+												<div class="space-y-1.5">
+													<Label for="hero_tone_neutral_desc" class="text-xs font-semibold">Deskripsi Nuansa Warna</Label>
+													<Input
+														id="hero_tone_neutral_desc"
+														name="hero_tone_neutral_desc"
+														type="text"
+														bind:value={neutralDesc}
+														placeholder="Nuansa netral seimbang: soft ecru, midnight graphite..."
+														class="text-xs"
+													/>
+												</div>
+											</div>
+
+											<!-- 6 Color Swatches Editor Neutral -->
+											<div class="space-y-2 pt-2">
+												<Label class="text-xs font-semibold text-foreground flex items-center justify-between">
+													<span>6 Warna Kunci (4 Dasar + 2 Aksen)</span>
+													<button
+														type="button"
+														onclick={() => (neutralColors = JSON.parse(JSON.stringify(defaultNeutralColors)))}
+														class="text-[11px] font-medium text-muted-foreground hover:text-foreground underline"
+													>
+														Reset Warna Neutral
+													</button>
+												</Label>
+
+												<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+													{#each neutralColors as col, i}
+														<div class="flex items-center gap-2 p-2 rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30">
+															<input
+																type="color"
+																bind:value={col.hex}
+																class="size-8 rounded-lg border border-black/15 dark:border-white/20 cursor-pointer shrink-0 p-0 bg-transparent"
+																title="Pilih warna swatch"
+															/>
+															<div class="min-w-0 flex-1 grid grid-cols-2 gap-1.5">
+																<Input
+																	type="text"
+																	bind:value={col.name}
+																	placeholder="Nama warna"
+																	class="text-xs h-7 px-2"
+																/>
+																<Input
+																	type="text"
+																	bind:value={col.hex}
+																	placeholder="#HEX"
+																	class="text-xs h-7 px-2 font-mono uppercase"
+																/>
+															</div>
+															<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border {i < 4 ? 'bg-secondary text-foreground' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'} shrink-0">
+																{i < 4 ? 'Base' : 'Aksen'}
+															</span>
+														</div>
+													{/each}
+												</div>
+											</div>
+										{/if}
+									</CardContent>
+								</Card>
+							{/if}
+
+							<!-- Tombol Simpan Perubahan -->
+							<div class="sticky bottom-4 z-10 p-3 rounded-xl border border-border/80 bg-card/95 backdrop-blur shadow-md flex items-center justify-between gap-3">
+								<div class="flex items-center gap-2 text-xs text-muted-foreground">
+									<CheckIcon class="size-3.5 text-emerald-500" />
+									<span>Semua perubahan live preview langsung terlihat</span>
+								</div>
+								<Button
+									type="submit"
+									class="px-6 font-semibold text-xs bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-900 shadow-sm"
+								>
+									Simpan Pengaturan Hero & Tone
+								</Button>
+							</div>
+						</form>
+					</div>
+
+					<!-- KOLOM KANAN: LIVE PREVIEW HERO INTERAKTIF -->
+					<div class="xl:col-span-5 sticky top-20 space-y-4">
+						<Card class="border-border shadow-sm overflow-hidden">
+							<CardHeader class="pb-3 border-b border-border/60 bg-stone-50/50 dark:bg-stone-900/40">
+								<div class="flex items-center justify-between">
+									<CardTitle class="font-serif text-sm font-bold flex items-center gap-2">
+										<EyeIcon class="size-4 text-emerald-500" />
+										Live Preview Beranda
+									</CardTitle>
+									<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+										Real-time
+									</span>
+								</div>
+								<CardDescription class="text-[11px]">
+									Tampilan hasil render yang akan dilihat pengguna di halaman beranda.
+								</CardDescription>
+							</CardHeader>
+
+							<CardContent class="p-4 sm:p-5 space-y-5 bg-background">
+								<!-- Preview Teks Kiri Hero -->
+								<div class="space-y-3 border-b border-border/60 pb-4">
+									<h3 class="font-serif text-xl sm:text-2xl font-normal tracking-tight text-foreground leading-[1.2]">
+										{heroTitle1} <br />
+										<span class="italic text-foreground font-medium">{heroTitle2}</span>
+									</h3>
+
+									<p class="text-xs text-stone-700 dark:text-stone-300 leading-relaxed font-normal">
+										{heroDescription}
+									</p>
+
+									<div class="flex flex-wrap items-center gap-2 pt-1">
+										<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 shadow-2xs">
+											{heroCtaText}
+											<ArrowRightIcon class="size-3" />
+										</span>
+										<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-border text-foreground">
+											<CompassIcon class="size-3" />
+											{heroCtaSecondaryText}
+										</span>
+									</div>
+									<p class="text-[10px] text-muted-foreground">{heroCtaSubtext}</p>
+
+									<!-- 3 Stats Preview -->
+									<div class="grid grid-cols-3 gap-2 border-t border-border/60 pt-3 text-center">
+										<div>
+											<div class="font-serif text-sm font-bold text-foreground">{heroStat1Val}</div>
+											<div class="text-[9px] text-muted-foreground truncate">{heroStat1Lbl}</div>
+										</div>
+										<div>
+											<div class="font-serif text-sm font-bold text-foreground">{heroStat2Val}</div>
+											<div class="text-[9px] text-muted-foreground truncate">{heroStat2Lbl}</div>
+										</div>
+										<div>
+											<div class="font-serif text-sm font-bold text-foreground">{heroStat3Val}</div>
+											<div class="text-[9px] text-muted-foreground truncate">{heroStat3Lbl}</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- Preview Kartu Color Palette & Capsule -->
+								<div class="rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs space-y-3">
+									<div class="flex items-center justify-between border-b border-border/60 pb-2.5">
+										<div class="flex items-center gap-1.5">
+											<div class="flex size-6 items-center justify-center rounded-md bg-stone-100 dark:bg-stone-800 text-foreground">
+												<PaletteIcon class="size-3.5" />
+											</div>
+											<span class="text-[11px] font-bold text-foreground uppercase tracking-wider">Color Palette</span>
+										</div>
+
+										<!-- Preview Tone Switcher -->
+										<div class="flex items-center gap-1 p-0.5 rounded-md bg-stone-100 dark:bg-stone-800 border border-border/60">
+											{#each [
+												{ id: "hangat", label: "Warm" },
+												{ id: "dingin", label: "Cool" },
+												{ id: "netral", label: "Neutral" }
+											] as t}
+												<button
+													type="button"
+													onclick={() => (previewTone = t.id as any)}
+													class="rounded py-0.5 px-2 text-[10px] transition-all {previewTone === t.id ? 'bg-background shadow-2xs font-bold text-foreground border border-border/60' : 'text-stone-600 dark:text-stone-400 font-medium'}"
+												>
+													{t.label}
+												</button>
+											{/each}
+										</div>
+									</div>
+
+									<div class="flex items-center justify-between">
+										<div>
+											<h4 class="font-serif text-xs font-bold text-foreground">
+												{currentPreviewPalette.name}
+											</h4>
+											<span class="text-[10px] text-muted-foreground">
+												Deteksi: <strong class="text-foreground">{currentPreviewPalette.veinText}</strong>
+											</span>
+										</div>
+										<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border border-border/80 bg-stone-50 dark:bg-stone-900/60 text-foreground">
+											6 Warna Kunci
+										</span>
+									</div>
+
+									<!-- 6 Swatches Preview -->
+									<div class="grid grid-cols-6 gap-1.5">
+										{#each currentPreviewPalette.colors as col}
+											<div class="flex flex-col items-center rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 p-1.5 text-center">
+												<span
+													class="size-6 rounded-md border border-black/15 shadow-2xs"
+													style="background-color: {col.hex}"
+												></span>
+												<span class="mt-1 text-[8px] font-bold text-foreground truncate w-full" title={col.name}>
+													{col.name}
+												</span>
+												<span class="text-[7px] font-mono text-muted-foreground">{col.hex}</span>
+											</div>
+										{/each}
+									</div>
+
+									<!-- Floating Pill -->
+									<div class="rounded-full border border-border bg-stone-50 dark:bg-stone-900/50 px-2.5 py-1 text-[10px] font-semibold text-foreground flex items-center gap-1.5">
+										<span class="size-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+										<span class="truncate">{heroFloatingText}</span>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+			</Tabs.Content>
+
+			<!-- ========================================== -->
+			<!-- TAB 4: PENGATURAN SHOPEE GLOBAL & TIPS -->
 			<!-- ========================================== -->
 			<Tabs.Content value="settings" class="space-y-6">
 				<!-- Header Section -->
@@ -924,6 +1897,29 @@
 					<p class="text-xs text-muted-foreground">
 						Kelola identitas website, logo, akun & keamanan admin, serta konfigurasi integrasi Shopee Affiliate & AI.
 					</p>
+				</div>
+
+				<!-- Banner Shortcut ke Pengaturan Hero & Tone Color -->
+				<div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+					<div class="flex items-center gap-2.5">
+						<span class="inline-flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+							<SparklesIcon class="size-4" />
+						</span>
+						<div>
+							<h3 class="text-xs font-bold text-foreground">Pengaturan Kata-Kata Hero & Tone Color</h3>
+							<p class="text-[11px] text-muted-foreground">Kustomisasi judul, deskripsi hero, default tone, dan kode warna swatch di tab khusus.</p>
+						</div>
+					</div>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onclick={() => (adminTab = "hero")}
+						class="text-xs font-semibold gap-1.5 shrink-0 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 text-foreground"
+					>
+						<span>Buka Tab Hero & Tone</span>
+						<ArrowRightIcon class="size-3.5" />
+					</Button>
 				</div>
 
 				<div class="grid gap-6 lg:grid-cols-2">
@@ -1364,7 +2360,7 @@
 						>
 							<div class="size-8 rounded-md border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center">
 								{#if prodItem.imageUrl}
-									<img src={prodItem.imageUrl} alt={prodItem.name} class="size-full object-contain p-0.5" />
+									<img src={prodItem.imageUrl} alt={prodItem.name} class="size-full object-cover" />
 								{:else}
 									<ShirtIcon class="size-4 text-muted-foreground/40" />
 								{/if}
@@ -1434,7 +2430,7 @@
 				<div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
 					<div class="size-16 rounded-xl border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 						{#if editingOutfit.imageUrl}
-							<img src={editingOutfit.imageUrl} alt="Preview Look" class="size-full object-contain p-1" />
+							<img src={editingOutfit.imageUrl} alt="Preview Look" class="size-full object-cover" />
 						{:else}
 							<ShirtIcon class="size-7 text-muted-foreground/30" />
 						{/if}
@@ -1560,7 +2556,7 @@
 						<!-- Preview Thumbnail Produk -->
 						<div class="size-16 rounded-xl border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 							{#if activeItem.imageUrl}
-								<img src={activeItem.imageUrl} alt="Preview" class="size-full object-contain p-1" />
+								<img src={activeItem.imageUrl} alt="Preview" class="size-full object-cover" />
 							{:else}
 								<ShirtIcon class="size-7 text-muted-foreground/30" />
 							{/if}
@@ -1700,6 +2696,71 @@
 				</Button>
 				<Button type="submit" class="bg-destructive hover:bg-destructive/90 text-white hover:text-white font-semibold shadow-xs">
 					Hapus Outfit
+				</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>
+
+<!-- ========================================== -->
+<!-- DIALOG KONFIRMASI RESET HERO & TONE COLOR -->
+<!-- ========================================== -->
+<Dialog.Root bind:open={isResetHeroDialogOpen}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="font-serif text-lg font-bold flex items-center gap-2 text-foreground">
+				<RotateCcwIcon class="size-4 text-amber-500" />
+				Reset Hero & Tone Color ke Standar?
+			</Dialog.Title>
+			<Dialog.Description class="text-xs text-muted-foreground pt-1">
+				Tindakan ini akan mengembalikan semua kata-kata headline, deskripsi, teks tombol, metrik statistik, serta susunan warna palet tone (Warm, Cool, Netral) ke bawaan standar awal.
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<form
+			action="?/resetHeroSettings"
+			method="POST"
+			use:enhance={() => {
+				return async ({ update, result }) => {
+					await update();
+					isResetHeroDialogOpen = false;
+					if (result.type === "success") {
+						toast.success("Pengaturan Hero & Tone Color berhasil direset!");
+						heroTitle1 = "Lebih sedikit pakaian,";
+						heroTitle2 = "lebih banyak gaya.";
+						heroDescription = "Bangun capsule wardrobe fungsional 12 item yang menghasilkan 30+ kombinasi outfit siap pakai. Dirancang personal untuk pria dan wanita berdasarkan undertone urat nadi dan proporsi tubuhmu.";
+						heroCtaText = "Mulai Style Check";
+						heroCtaSecondaryText = "Lihat Contoh Lookbook";
+						heroCtaSubtext = "Gratis · Sekitar 3 menit · Langsung siap pakai";
+						heroFloatingText = "Deteksi warna urat nadi pergelangan tangan otomatis";
+						heroStat1Val = "12 Item";
+						heroStat1Lbl = "Wardrobe esensial";
+						heroStat2Val = "30+ Look";
+						heroStat2Lbl = "Kombinasi siap pakai";
+						heroStat3Val = "100%";
+						heroStat3Lbl = "Gratis selamanya";
+						heroDefaultTone = "hangat";
+						previewTone = "hangat";
+						toneEditorTab = "hangat";
+						warmName = "Warm Earth & Sun";
+						warmDesc = "Nuansa bumi hangat: broken white, camel, espresso, dan aksen terracotta.";
+						warmColors = JSON.parse(JSON.stringify(defaultWarmColors));
+						coolName = "Cool Slate & Coastal";
+						coolDesc = "Nuansa sejuk berkelas: pure white, classic navy, charcoal, dan slate blue.";
+						coolColors = JSON.parse(JSON.stringify(defaultCoolColors));
+						neutralName = "Neutral Mineral & Stone";
+						neutralDesc = "Nuansa netral seimbang: soft ecru, midnight graphite, taupe, dan sage green.";
+						neutralColors = JSON.parse(JSON.stringify(defaultNeutralColors));
+					}
+				};
+			}}
+		>
+			<Dialog.Footer class="mt-4 gap-2">
+				<Button variant="outline" type="button" onclick={() => (isResetHeroDialogOpen = false)} class="text-xs text-foreground hover:bg-muted hover:text-foreground">
+					Batal
+				</Button>
+				<Button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs">
+					Ya, Reset ke Standar
 				</Button>
 			</Dialog.Footer>
 		</form>

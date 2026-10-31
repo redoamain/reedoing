@@ -10,7 +10,8 @@ import {
 	saveAffiliateItem,
 	deleteAffiliateItem,
 	getAdminSettings,
-	saveAdminSetting
+	saveAdminSetting,
+	deleteAdminSetting
 } from "$lib/server/db/queries";
 
 export const load: PageServerLoad = async () => {
@@ -227,6 +228,103 @@ export const actions: Actions = {
 		}
 
 		return { success: true, message: "Pengaturan berhasil disimpan." };
+	},
+
+	saveHeroSettings: async ({ request }) => {
+		const data = await request.formData();
+		const heroTitle1 = data.get("hero_title_1")?.toString();
+		const heroTitle2 = data.get("hero_title_2")?.toString();
+		const heroDescription = data.get("hero_description")?.toString();
+		const heroCtaText = data.get("hero_cta_text")?.toString();
+		const heroCtaSecondaryText = data.get("hero_cta_secondary_text")?.toString();
+		const heroCtaSubtext = data.get("hero_cta_subtext")?.toString();
+		const heroFloatingText = data.get("hero_floating_text")?.toString();
+
+		const heroStat1Val = data.get("hero_stat_1_val")?.toString();
+		const heroStat1Lbl = data.get("hero_stat_1_lbl")?.toString();
+		const heroStat2Val = data.get("hero_stat_2_val")?.toString();
+		const heroStat2Lbl = data.get("hero_stat_2_lbl")?.toString();
+		const heroStat3Val = data.get("hero_stat_3_val")?.toString();
+		const heroStat3Lbl = data.get("hero_stat_3_lbl")?.toString();
+
+		const heroDefaultTone = data.get("hero_default_tone")?.toString()?.trim();
+
+		const heroToneWarmName = data.get("hero_tone_warm_name")?.toString();
+		const heroToneWarmDesc = data.get("hero_tone_warm_desc")?.toString();
+		const heroToneWarmColors = data.get("hero_tone_warm_colors")?.toString();
+
+		const heroToneCoolName = data.get("hero_tone_cool_name")?.toString();
+		const heroToneCoolDesc = data.get("hero_tone_cool_desc")?.toString();
+		const heroToneCoolColors = data.get("hero_tone_cool_colors")?.toString();
+
+		const heroToneNeutralName = data.get("hero_tone_neutral_name")?.toString();
+		const heroToneNeutralDesc = data.get("hero_tone_neutral_desc")?.toString();
+		const heroToneNeutralColors = data.get("hero_tone_neutral_colors")?.toString();
+
+		if (heroTitle1 !== undefined) await saveAdminSetting("hero_title_1", heroTitle1.trim());
+		if (heroTitle2 !== undefined) await saveAdminSetting("hero_title_2", heroTitle2.trim());
+		if (heroDescription !== undefined) await saveAdminSetting("hero_description", heroDescription.trim());
+		if (heroCtaText !== undefined) await saveAdminSetting("hero_cta_text", heroCtaText.trim());
+		if (heroCtaSecondaryText !== undefined) await saveAdminSetting("hero_cta_secondary_text", heroCtaSecondaryText.trim());
+		if (heroCtaSubtext !== undefined) await saveAdminSetting("hero_cta_subtext", heroCtaSubtext.trim());
+		if (heroFloatingText !== undefined) await saveAdminSetting("hero_floating_text", heroFloatingText.trim());
+
+		if (heroStat1Val !== undefined) await saveAdminSetting("hero_stat_1_val", heroStat1Val.trim());
+		if (heroStat1Lbl !== undefined) await saveAdminSetting("hero_stat_1_lbl", heroStat1Lbl.trim());
+		if (heroStat2Val !== undefined) await saveAdminSetting("hero_stat_2_val", heroStat2Val.trim());
+		if (heroStat2Lbl !== undefined) await saveAdminSetting("hero_stat_2_lbl", heroStat2Lbl.trim());
+		if (heroStat3Val !== undefined) await saveAdminSetting("hero_stat_3_val", heroStat3Val.trim());
+		if (heroStat3Lbl !== undefined) await saveAdminSetting("hero_stat_3_lbl", heroStat3Lbl.trim());
+
+		if (heroDefaultTone && ["hangat", "dingin", "netral"].includes(heroDefaultTone)) {
+			await saveAdminSetting("hero_default_tone", heroDefaultTone);
+		}
+
+		if (heroToneWarmName !== undefined) await saveAdminSetting("hero_tone_warm_name", heroToneWarmName.trim());
+		if (heroToneWarmDesc !== undefined) await saveAdminSetting("hero_tone_warm_desc", heroToneWarmDesc.trim());
+		if (heroToneWarmColors) await saveAdminSetting("hero_tone_warm_colors", heroToneWarmColors);
+
+		if (heroToneCoolName !== undefined) await saveAdminSetting("hero_tone_cool_name", heroToneCoolName.trim());
+		if (heroToneCoolDesc !== undefined) await saveAdminSetting("hero_tone_cool_desc", heroToneCoolDesc.trim());
+		if (heroToneCoolColors) await saveAdminSetting("hero_tone_cool_colors", heroToneCoolColors);
+
+		if (heroToneNeutralName !== undefined) await saveAdminSetting("hero_tone_neutral_name", heroToneNeutralName.trim());
+		if (heroToneNeutralDesc !== undefined) await saveAdminSetting("hero_tone_neutral_desc", heroToneNeutralDesc.trim());
+		if (heroToneNeutralColors) await saveAdminSetting("hero_tone_neutral_colors", heroToneNeutralColors);
+
+		return { success: true, message: "Pengaturan teks Hero & Tone Color berhasil disimpan." };
+	},
+
+	resetHeroSettings: async () => {
+		const keysToReset = [
+			"hero_title_1",
+			"hero_title_2",
+			"hero_description",
+			"hero_cta_text",
+			"hero_cta_secondary_text",
+			"hero_cta_subtext",
+			"hero_floating_text",
+			"hero_stat_1_val",
+			"hero_stat_1_lbl",
+			"hero_stat_2_val",
+			"hero_stat_2_lbl",
+			"hero_stat_3_val",
+			"hero_stat_3_lbl",
+			"hero_default_tone",
+			"hero_tone_warm_name",
+			"hero_tone_warm_desc",
+			"hero_tone_warm_colors",
+			"hero_tone_cool_name",
+			"hero_tone_cool_desc",
+			"hero_tone_cool_colors",
+			"hero_tone_neutral_name",
+			"hero_tone_neutral_desc",
+			"hero_tone_neutral_colors"
+		];
+		for (const k of keysToReset) {
+			await deleteAdminSetting(k);
+		}
+		return { success: true, message: "Pengaturan Hero & Tone Color berhasil direset ke standar." };
 	},
 
 	logout: async ({ cookies }) => {
