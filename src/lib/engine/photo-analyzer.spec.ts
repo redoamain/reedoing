@@ -80,4 +80,50 @@ describe("Photo Analyzer & Skin Undertone Detection", () => {
 		expect(analysis.recommendedOutfitColors.length).toBeGreaterThan(0);
 		expect(analysis.avoidColors.length).toBeGreaterThan(0);
 	});
+
+	it("mendeteksi perpaduan urat nadi hijau dan biru di foto sebagai undertone netral", () => {
+		// Mock foto 40x40 dengan baseline kulit dan campuran pembuluh darah hijau + biru
+		const width = 40;
+		const height = 40;
+		const buffer = new Uint8ClampedArray(width * height * 4);
+
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+				const idx = (y * width + x) * 4;
+				// Baseline kulit netral
+				let r = 215, g = 175, b = 145;
+
+				// Urat nadi kehijauan pada beberapa pixel
+				if (x >= 10 && x <= 16 && y >= 10 && y <= 16) {
+					r = 185;
+					g = 178;
+					b = 141;
+				}
+				// Urat nadi kebiruan pada beberapa pixel lain
+				else if (x >= 24 && x <= 30 && y >= 10 && y <= 16) {
+					r = 185;
+					g = 171;
+					b = 149;
+				}
+
+				buffer[idx] = r;
+				buffer[idx + 1] = g;
+				buffer[idx + 2] = b;
+				buffer[idx + 3] = 255;
+			}
+		}
+
+		const mockImageData = {
+			data: buffer,
+			width,
+			height,
+			colorSpace: "srgb" as PredefinedColorSpace
+		} as ImageData;
+
+		const analysis = analyzeSkinFromImageData(mockImageData);
+		expect(analysis.veinDetected).toBe(true);
+		expect(analysis.veinColorType).toBe("campuran");
+		expect(analysis.undertone).toBe("netral");
+		expect(analysis.explanation).toContain("Neutral");
+	});
 });

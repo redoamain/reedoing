@@ -467,7 +467,7 @@
 							{:else}
 								<span class="inline-flex items-center gap-1 rounded-full bg-teal-500/15 border border-teal-500/30 px-2 py-0.5 text-[10px] font-semibold text-teal-700 dark:text-teal-300">
 									<span class="size-1.5 rounded-full bg-teal-600"></span>
-									Urat Nadi Campuran
+									Urat Nadi Campuran (Biru & Hijau)
 								</span>
 							{/if}
 						</div>
@@ -500,20 +500,20 @@
 			</div>
 
 			<!-- Vein Color Calibration / Camera White-Balance Compensation Card -->
-			<div class="rounded-xl border border-primary/25 bg-primary/5 p-4 space-y-3">
+			<div class="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
 				<div class="flex items-start sm:items-center justify-between gap-2">
 					<div class="flex items-center gap-2">
 						<SlidersHorizontalIcon class="size-4 text-primary shrink-0" />
 						<span class="font-bold text-foreground text-xs sm:text-sm">
-							Kalibrasi Warna Nadi (Kompensasi Kamera & Cahaya)
+							Penyesuaian Manual Urat Nadi (Opsional)
 						</span>
 					</div>
 					<span class="text-[10px] uppercase font-mono tracking-wider font-semibold px-2 py-0.5 rounded bg-background border border-border text-muted-foreground shrink-0">
-						Penyelaras AI
+						Opsional
 					</span>
 				</div>
 				<p class="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-					Sensor kamera HP dan pencahayaan ruangan kerap mengubah temperatur warna foto menjadi bias dingin (kebiruan). Jika urat nadi aslimu di pergelangan tangan terlihat kehijauan di mata, sentuh pilihan di bawah agar rekomendasi pakaian 100% presisi:
+					Sistem AI secara otomatis menganalisis spektrum warna kulit dan pembuluh darah urat nadi langsung dari foto kamera di atas. Pilihan di bawah hanya berfungsi sebagai penyesuai manual opsional bila Anda ingin bereksperimen atau bila pencahayaan ruangan saat foto sangat ekstrem:
 				</p>
 				<div class="grid gap-2 sm:grid-cols-3">
 					<button

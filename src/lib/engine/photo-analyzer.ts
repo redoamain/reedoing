@@ -57,14 +57,15 @@ export function rgbToLab(r: number, g: number, b: number): { l: number; a: numbe
  * Cek apakah sebuah pixel RGB berada dalam rentang pigmen kulit manusia
  */
 export function isSkinPixel(r: number, g: number, b: number): boolean {
+	// Kriteria kulit manusia mencakup permukaan kulit normal dan area vaskular (urat nadi)
+	// Pada area urat nadi hijau, selisih r dan g bisa lebih tipis karena penyerapan cahaya merah
 	const basicSkin =
 		r > 60 &&
 		g > 40 &&
 		b > 20 &&
-		r > g &&
+		r >= g &&
 		r > b &&
-		Math.abs(r - g) > 12 &&
-		r - b > 15;
+		r - b > 10;
 
 	if (!basicSkin) return false;
 
@@ -276,8 +277,9 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 		const baseGbRatio = avgG / (avgB + 0.001);
 
 		for (const p of skinPixels) {
-			// Urat nadi berada pada area bayangan vaskular yang sedikit lebih gelap (60% - 98% dari lum rata-rata kulit)
-			if (p.lum >= avgLum * 0.60 && p.lum <= avgLum * 0.98) {
+			// Urat nadi berada pada area vaskular: sedikit lebih gelap atau Red terabsorpsi oleh hemoglobin
+			const isVascular = (p.lum >= avgLum * 0.55 && p.lum <= avgLum * 1.02) || p.r < avgR * 0.98;
+			if (isVascular) {
 				const pGbRatio = p.g / (p.b + 0.001);
 				const greenDiff = (p.g / (p.r + p.b + 0.001)) - (avgG / (avgR + avgB + 0.001));
 				const blueDiff = (p.b / (p.r + p.g + 0.001)) - (avgB / (avgR + avgG + 0.001));
@@ -286,10 +288,10 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 				const relB = (p.b / normB) / ((p.r / normR) + 0.001);
 
 				// Deteksi pembiasan hijau: rasio G/B lebih tinggi dari baseline kulit atau relG naik lebih tinggi
-				if (pGbRatio >= baseGbRatio && (greenDiff > 0.005 || relG > relB * 1.02)) {
+				if (pGbRatio >= baseGbRatio && (greenDiff > 0.004 || relG > relB * 1.01)) {
 					greenVeinScore += 1 + Math.max(0, greenDiff) * 20;
 					veinCandidateCount++;
-				} else if (pGbRatio < baseGbRatio && (blueDiff > 0.005 || relB > relG * 1.02)) {
+				} else if (pGbRatio < baseGbRatio && (blueDiff > 0.004 || relB > relG * 1.01)) {
 					// Deteksi pembiasan biru: rasio B/G lebih tinggi dari baseline kulit
 					blueVeinScore += 1 + Math.max(0, blueDiff) * 20;
 					veinCandidateCount++;
@@ -298,7 +300,7 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 		}
 	}
 
-	const veinDetected = veinCandidateCount >= 8;
+	const veinDetected = veinCandidateCount >= 6;
 	let veinColorType: VeinColorType = "campuran";
 	let undertone: Undertone = skinLabResult.undertone;
 	let veinDescription = "";
@@ -310,27 +312,58 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 		const greenPercent = (greenVeinScore / (totalScore || 1)) * 100;
 		const bluePercent = (blueVeinScore / (totalScore || 1)) * 100;
 
-		if (greenPercent > 54) {
+		// Jika kedua pigmen urat nadi (hijau dan biru) terdeteksi bersamaan di foto
+		// (masing-masing memiliki porsi signifikan >= 30%, atau tidak ada yang dominan ekstrem > 65%)
+		// maka secara ilmiah terklasifikasi otomatis sebagai Campuran (Netral Tone)
+		const isMixed =
+			(greenPercent >= 30 && bluePercent >= 30) ||
+			(Math.abs(greenPercent - bluePercent) <= 30 && greenVeinScore >= 2 && blueVeinScore >= 2);
+
+		if (isMixed) {
+			veinColorType = "campuran";
+			undertone = "netral";
+			confidence = Math.min(96, Math.round(confidence + 5));
+			veinDescription =
+				"Foto kamera mendeteksi perpaduan urat nadi berwarna hijau dan biru secara bersamaan.";
+			explanation =
+				"Berdasarkan analisis foto kamera, terdeteksi pembiasan urat nadi berwarna hijau dan biru di pergelangan tanganmu. Karakteristik ini menandakan Neutral Color Tone (Netral). Kulitmu memiliki perpaduan pigmen hangat dan sejuk alami yang seimbang, sehingga kamu sangat fleksibel memadukan spektrum warna Broken White/Ecru, Classic Navy, Sage Green, Charcoal Grey, dan Taupe.";
+		} else if (greenPercent > 65) {
 			veinColorType = "hijau";
 			undertone = "hangat";
 			confidence = Math.min(97, Math.round(confidence + 6));
-			veinDescription = "Urat nadi pergelangan tangan terdeteksi dominan kehijauan (olive green).";
+			veinDescription = "Foto kamera mendeteksi urat nadi pergelangan tangan dominan kehijauan (olive green).";
 			explanation =
-				"Foto pergelangan tangan mendeteksi urat nadi berwarna kehijauan (olive green). Pembiasan hijau ini adalah indikator akurat Warm Color Tone, karena pigmen kulit keemasan/peachy menyaring cahaya pembuluh darah. Warna bumi seperti Broken White, Camel, Terracotta, dan Deep Olive akan berpadu sempurna dengan penampilanmu.";
-		} else if (bluePercent > 54) {
+				"Berdasarkan analisis foto kamera, urat nadi pergelangan tangan terdeteksi dominan kehijauan (olive green). Pembiasan hijau ini adalah indikator akurat Warm Color Tone, karena pigmen kulit keemasan/peachy menyaring cahaya pembuluh darah. Warna bumi seperti Broken White, Camel, Terracotta, dan Deep Olive akan berpadu sempurna dengan penampilanmu.";
+		} else if (bluePercent > 65) {
 			veinColorType = "biru";
 			undertone = "dingin";
 			confidence = Math.min(96, Math.round(confidence + 6));
-			veinDescription = "Urat nadi pergelangan tangan terdeteksi dominan kebiruan atau ungu.";
+			veinDescription = "Foto kamera mendeteksi urat nadi pergelangan tangan dominan kebiruan atau ungu.";
 			explanation =
-				"Foto pergelangan tangan mendeteksi urat nadi berwarna kebiruan hingga ungu. Pembiasan biru jernih ini adalah indikator akurat Cool Color Tone akibat pigmen kulit sejuk alami. Warna berani dan sejuk seperti Pure White, Deep Navy, Abu Arang, dan Burgundy akan membuat kulitmu tampak cerah dan tegas.";
+				"Berdasarkan analisis foto kamera, urat nadi pergelangan tangan terdeteksi dominan kebiruan hingga ungu. Pembiasan biru jernih ini adalah indikator akurat Cool Color Tone akibat pigmen kulit sejuk alami. Warna berani dan sejuk seperti Pure White, Deep Navy, Abu Arang, dan Burgundy akan membuat kulitmu tampak cerah dan tegas.";
 		} else {
-			veinColorType = "campuran";
-			undertone = "netral";
+			// Kasus transisi moderat: periksa sinyal CIE Lab kulit permukaan
+			if (skinLabResult.undertone === "hangat" && greenPercent > bluePercent) {
+				veinColorType = "hijau";
+				undertone = "hangat";
+			} else if (skinLabResult.undertone === "dingin" && bluePercent > greenPercent) {
+				veinColorType = "biru";
+				undertone = "dingin";
+			} else {
+				veinColorType = "campuran";
+				undertone = "netral";
+			}
 			confidence = Math.min(94, Math.round(confidence + 3));
-			veinDescription = "Urat nadi pergelangan tangan memperlihatkan perpaduan seimbang warna hijau dan biru.";
+			veinDescription =
+				undertone === "netral"
+					? "Foto kamera memperlihatkan perpaduan spektrum urat nadi hijau dan biru."
+					: undertone === "hangat"
+						? "Foto kamera mendeteksi urat nadi cenderung kehijauan dengan latar pigmen hangat."
+						: "Foto kamera mendeteksi urat nadi cenderung kebiruan dengan latar pigmen sejuk.";
 			explanation =
-				"Foto pergelangan tangan memperlihatkan perpaduan warna urat nadi hijau dan biru secara seimbang. Ini menandakan Neutral Color Tone. Kulitmu tidak condong ke pigmen hangat maupun dingin berlebih, sehingga kamu memiliki kebebasan tinggi mengenakan spektrum warna netral, navy klasik, maupun sage green.";
+				undertone === "netral"
+					? "Foto kamera mendeteksi keseimbangan spektrum hijau dan biru pada urat nadi pergelangan tanganmu (Neutral Tone). Kamu sangat fleksibel mengenakan palet warna netral, navy klasik, maupun aksen sage green."
+					: skinLabResult.explanation;
 		}
 	} else {
 		// Jika kontras urat nadi kurang menonjol, ikuti klasifikasi CIE Lab kulit dan beri keterangan ramah
@@ -338,10 +371,10 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 		veinColorType = undertone === "hangat" ? "hijau" : undertone === "dingin" ? "biru" : "campuran";
 		veinDescription =
 			undertone === "hangat"
-				? "Berdasarkan pigmen keemasan permukaan kulit, urat nadi pergelangan tangan cenderung kehijauan."
+				? "Berdasarkan pigmen keemasan permukaan kulit dari foto kamera, urat nadi pergelangan tangan cenderung kehijauan."
 				: undertone === "dingin"
-					? "Berdasarkan pigmen sejuk permukaan kulit, urat nadi pergelangan tangan cenderung kebiruan/ungu."
-					: "Urat nadi pergelangan tangan terlihat memadukan spektrum biru dan hijau.";
+					? "Berdasarkan pigmen sejuk permukaan kulit dari foto kamera, urat nadi pergelangan tangan cenderung kebiruan/ungu."
+					: "Foto kamera memperlihatkan pigmen permukaan kulit seimbang (kombinasi hijau & biru).";
 
 		explanation = skinLabResult.explanation;
 	}
