@@ -116,9 +116,13 @@ export function classifyUndertoneFromRGB(r: number, g: number, b: number): {
 	let confidence = 88;
 	let explanation = "";
 
-	if (goldenIndex > 22 || (goldenIndex > 19 && ratio > 2.2)) {
+	// Koreksi ambang batas untuk kulit Indonesia/Asia dan pencahayaan kamera HP:
+	// goldenIndex > 20 atau (goldenIndex > 18.7 && ratio > 2.6) menandakan hangat (golden warmth)
+	// goldenIndex < 11 atau ratio < 0.95 menandakan dingin (rosy/cool)
+	// di antaranya adalah netral seimbang
+	if (goldenIndex > 20 || (goldenIndex > 18.7 && ratio > 2.6)) {
 		undertone = "hangat";
-		confidence = Math.min(97, Math.round(75 + goldenIndex * 0.6));
+		confidence = Math.min(97, Math.round(78 + goldenIndex * 0.5));
 		explanation =
 			"Pigmen kulitmu didominasi spektrum keemasan/peachy (warm tone). Nuansa bumi (earthy tones), broken white, camel, dan terracotta akan menyatu paling harmonis dengan warna kulitmu.";
 	} else if (goldenIndex < 11 || ratio < 0.95) {
@@ -258,38 +262,43 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 	const skinLabResult = classifyUndertoneFromRGB(avgR, avgG, avgB);
 
 	// Analisis Urat Nadi (Vascular Subcutaneous Tint Analysis)
-	// Urat nadi pada pergelangan tangan bagian dalam memiliki kontras pencahayaan sedikit lebih gelap (lum lebih rendah)
-	// dengan pembiasan warna kehijauan (Warm) atau kebiruan/keunguan (Cool).
+	// Normalisasi white-balance: rasio relatif terhadap rata-rata warna kulit foto ini
+	// Ini menghilangkan pengaruh kamera yang memiliki tint terlalu biru, redup, atau jenuh.
 	const avgLum = 0.299 * avgR + 0.587 * avgG + 0.114 * avgB;
 	let greenVeinScore = 0;
 	let blueVeinScore = 0;
 	let veinCandidateCount = 0;
 
-	if (skinPixels.length > 50) {
-		const baseGreenRatio = avgG / (avgR + avgB + 0.001);
-		const baseBlueRatio = avgB / (avgR + avgG + 0.001);
+	if (skinPixels.length > 30) {
+		const normG = avgG > 0 ? avgG : 1;
+		const normB = avgB > 0 ? avgB : 1;
+		const normR = avgR > 0 ? avgR : 1;
+		const baseGbRatio = avgG / (avgB + 0.001);
 
 		for (const p of skinPixels) {
-			// Urat nadi berada pada area bayangan vaskular yang sedikit lebih gelap dari rata-rata kulit (70% - 95% dari lum rata-rata)
-			if (p.lum >= avgLum * 0.65 && p.lum <= avgLum * 0.96) {
-				const pGreenRatio = p.g / (p.r + p.b + 0.001);
-				const pBlueRatio = p.b / (p.r + p.g + 0.001);
+			// Urat nadi berada pada area bayangan vaskular yang sedikit lebih gelap (60% - 98% dari lum rata-rata kulit)
+			if (p.lum >= avgLum * 0.60 && p.lum <= avgLum * 0.98) {
+				const pGbRatio = p.g / (p.b + 0.001);
+				const greenDiff = (p.g / (p.r + p.b + 0.001)) - (avgG / (avgR + avgB + 0.001));
+				const blueDiff = (p.b / (p.r + p.g + 0.001)) - (avgB / (avgR + avgG + 0.001));
 
-				const diffGreen = pGreenRatio - baseGreenRatio;
-				const diffBlue = pBlueRatio - baseBlueRatio;
+				const relG = (p.g / normG) / ((p.r / normR) + 0.001);
+				const relB = (p.b / normB) / ((p.r / normR) + 0.001);
 
-				if (diffGreen > 0.015 && p.g > p.b) {
-					greenVeinScore += 1 + diffGreen * 10;
+				// Deteksi pembiasan hijau: rasio G/B lebih tinggi dari baseline kulit atau relG naik lebih tinggi
+				if (pGbRatio >= baseGbRatio && (greenDiff > 0.005 || relG > relB * 1.02)) {
+					greenVeinScore += 1 + Math.max(0, greenDiff) * 20;
 					veinCandidateCount++;
-				} else if (diffBlue > 0.015 && (p.b > p.g || (p.b / p.g) > 0.85)) {
-					blueVeinScore += 1 + diffBlue * 10;
+				} else if (pGbRatio < baseGbRatio && (blueDiff > 0.005 || relB > relG * 1.02)) {
+					// Deteksi pembiasan biru: rasio B/G lebih tinggi dari baseline kulit
+					blueVeinScore += 1 + Math.max(0, blueDiff) * 20;
 					veinCandidateCount++;
 				}
 			}
 		}
 	}
 
-	const veinDetected = veinCandidateCount >= 15;
+	const veinDetected = veinCandidateCount >= 8;
 	let veinColorType: VeinColorType = "campuran";
 	let undertone: Undertone = skinLabResult.undertone;
 	let veinDescription = "";
@@ -297,17 +306,21 @@ export function analyzeSkinFromImageData(imageData: ImageData): PhotoAnalysisRes
 	let confidence = skinLabResult.confidence;
 
 	if (veinDetected) {
-		if (greenVeinScore > blueVeinScore * 1.3) {
+		const totalScore = greenVeinScore + blueVeinScore;
+		const greenPercent = (greenVeinScore / (totalScore || 1)) * 100;
+		const bluePercent = (blueVeinScore / (totalScore || 1)) * 100;
+
+		if (greenPercent > 54) {
 			veinColorType = "hijau";
 			undertone = "hangat";
-			confidence = Math.min(97, Math.round(confidence + 5));
+			confidence = Math.min(97, Math.round(confidence + 6));
 			veinDescription = "Urat nadi pergelangan tangan terdeteksi dominan kehijauan (olive green).";
 			explanation =
 				"Foto pergelangan tangan mendeteksi urat nadi berwarna kehijauan (olive green). Pembiasan hijau ini adalah indikator akurat Warm Color Tone, karena pigmen kulit keemasan/peachy menyaring cahaya pembuluh darah. Warna bumi seperti Broken White, Camel, Terracotta, dan Deep Olive akan berpadu sempurna dengan penampilanmu.";
-		} else if (blueVeinScore > greenVeinScore * 1.3) {
+		} else if (bluePercent > 54) {
 			veinColorType = "biru";
 			undertone = "dingin";
-			confidence = Math.min(96, Math.round(confidence + 5));
+			confidence = Math.min(96, Math.round(confidence + 6));
 			veinDescription = "Urat nadi pergelangan tangan terdeteksi dominan kebiruan atau ungu.";
 			explanation =
 				"Foto pergelangan tangan mendeteksi urat nadi berwarna kebiruan hingga ungu. Pembiasan biru jernih ini adalah indikator akurat Cool Color Tone akibat pigmen kulit sejuk alami. Warna berani dan sejuk seperti Pure White, Deep Navy, Abu Arang, dan Burgundy akan membuat kulitmu tampak cerah dan tegas.";

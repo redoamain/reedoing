@@ -20,6 +20,7 @@
 	import SparklesIcon from "@lucide/svelte/icons/sparkles";
 	import HandIcon from "@lucide/svelte/icons/hand";
 	import LightbulbIcon from "@lucide/svelte/icons/lightbulb";
+	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
 	import { Button } from "$lib/components/ui/button";
 
 	interface Props {
@@ -498,46 +499,79 @@
 				</div>
 			</div>
 
-			<!-- Quick Vein Color Confirmation / Manual Override Bar -->
-			<div class="rounded-xl border border-border/80 bg-background/60 p-3.5 text-xs">
-				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-					<div>
-						<span class="font-semibold text-foreground block">
-							Sesuaikan Warna Urat Nadi (Bila Pencahayaan Foto Kurang Pas):
-						</span>
-						<span class="text-[11px] text-muted-foreground">
-							Klik pilihan yang paling mirip dengan urat nadi pergelangan tanganmu di bawah cahaya alami:
+			<!-- Vein Color Calibration / Camera White-Balance Compensation Card -->
+			<div class="rounded-xl border border-primary/25 bg-primary/5 p-4 space-y-3">
+				<div class="flex items-start sm:items-center justify-between gap-2">
+					<div class="flex items-center gap-2">
+						<SlidersHorizontalIcon class="size-4 text-primary shrink-0" />
+						<span class="font-bold text-foreground text-xs sm:text-sm">
+							Kalibrasi Warna Nadi (Kompensasi Kamera & Cahaya)
 						</span>
 					</div>
+					<span class="text-[10px] uppercase font-mono tracking-wider font-semibold px-2 py-0.5 rounded bg-background border border-border text-muted-foreground shrink-0">
+						Penyelaras AI
+					</span>
+				</div>
+				<p class="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+					Sensor kamera HP dan pencahayaan ruangan kerap mengubah temperatur warna foto menjadi bias dingin (kebiruan). Jika urat nadi aslimu di pergelangan tangan terlihat kehijauan di mata, sentuh pilihan di bawah agar rekomendasi pakaian 100% presisi:
+				</p>
+				<div class="grid gap-2 sm:grid-cols-3">
+					<button
+						type="button"
+						onclick={() => handleVeinTypeChange("hijau")}
+						class="relative flex flex-col p-3 rounded-xl border-2 text-left transition-all {analysisResult.veinColorType === 'hijau' ? 'border-amber-600 bg-amber-500/15 shadow-xs ring-1 ring-amber-500/30' : 'border-border bg-card hover:border-primary/40'}"
+					>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-1.5 font-bold text-xs text-amber-950 dark:text-amber-100">
+								<span class="size-2.5 rounded-full bg-emerald-600 shadow-xs"></span>
+								<span>Kehijauan (Warm)</span>
+							</div>
+							{#if analysisResult.veinColorType === 'hijau'}
+								<span class="text-amber-700 dark:text-amber-300 font-bold text-xs">✓ Aktif</span>
+							{/if}
+						</div>
+						<p class="mt-1 text-[11px] text-muted-foreground leading-tight">
+							Urat nadi tampak hijau/olive. Serasi warna broken white, camel, terracotta.
+						</p>
+					</button>
 
-					<div class="flex items-center gap-1.5 flex-wrap">
-						<button
-							type="button"
-							onclick={() => handleVeinTypeChange("hijau")}
-							class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all {analysisResult.veinColorType === 'hijau' ? 'border-amber-600 bg-amber-500/25 text-amber-950 dark:text-amber-100 shadow-2xs' : 'border-border bg-card hover:bg-secondary text-foreground'}"
-						>
-							<span class="size-2 rounded-full bg-emerald-600"></span>
-							<span>Hijau (Warm)</span>
-						</button>
+					<button
+						type="button"
+						onclick={() => handleVeinTypeChange("biru")}
+						class="relative flex flex-col p-3 rounded-xl border-2 text-left transition-all {analysisResult.veinColorType === 'biru' ? 'border-sky-600 bg-sky-500/15 shadow-xs ring-1 ring-sky-500/30' : 'border-border bg-card hover:border-primary/40'}"
+					>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-1.5 font-bold text-xs text-sky-950 dark:text-sky-100">
+								<span class="size-2.5 rounded-full bg-blue-600 shadow-xs"></span>
+								<span>Kebiruan (Cool)</span>
+							</div>
+							{#if analysisResult.veinColorType === 'biru'}
+								<span class="text-sky-700 dark:text-sky-300 font-bold text-xs">✓ Aktif</span>
+							{/if}
+						</div>
+						<p class="mt-1 text-[11px] text-muted-foreground leading-tight">
+							Urat nadi tampak biru/ungu. Serasi warna pure white, deep navy, burgundy.
+						</p>
+					</button>
 
-						<button
-							type="button"
-							onclick={() => handleVeinTypeChange("biru")}
-							class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all {analysisResult.veinColorType === 'biru' ? 'border-sky-600 bg-sky-500/25 text-sky-950 dark:text-sky-100 shadow-2xs' : 'border-border bg-card hover:bg-secondary text-foreground'}"
-						>
-							<span class="size-2 rounded-full bg-blue-600"></span>
-							<span>Biru / Ungu (Cool)</span>
-						</button>
-
-						<button
-							type="button"
-							onclick={() => handleVeinTypeChange("campuran")}
-							class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all {analysisResult.veinColorType === 'campuran' ? 'border-teal-600 bg-teal-500/25 text-teal-950 dark:text-teal-100 shadow-2xs' : 'border-border bg-card hover:bg-secondary text-foreground'}"
-						>
-							<span class="size-2 rounded-full bg-teal-600"></span>
-							<span>Campuran (Netral)</span>
-						</button>
-					</div>
+					<button
+						type="button"
+						onclick={() => handleVeinTypeChange("campuran")}
+						class="relative flex flex-col p-3 rounded-xl border-2 text-left transition-all {analysisResult.veinColorType === 'campuran' ? 'border-teal-600 bg-teal-500/15 shadow-xs ring-1 ring-teal-500/30' : 'border-border bg-card hover:border-primary/40'}"
+					>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-1.5 font-bold text-xs text-teal-950 dark:text-teal-100">
+								<span class="size-2.5 rounded-full bg-teal-600 shadow-xs"></span>
+								<span>Campuran (Netral)</span>
+							</div>
+							{#if analysisResult.veinColorType === 'campuran'}
+								<span class="text-teal-700 dark:text-teal-300 font-bold text-xs">✓ Aktif</span>
+							{/if}
+						</div>
+						<p class="mt-1 text-[11px] text-muted-foreground leading-tight">
+							Perpaduan hijau & biru seimbang. Serasi warna sage green, ecru, navy.
+						</p>
+					</button>
 				</div>
 			</div>
 
