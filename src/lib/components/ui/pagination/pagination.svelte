@@ -130,7 +130,7 @@
 						onclick={() => goToPage(1)}
 						disabled={page <= 1}
 						aria-label="Halaman Pertama"
-						class="inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
+						class="hidden sm:inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
 					>
 						<ChevronsLeftIcon class="size-3.5" />
 					</button>
@@ -188,7 +188,7 @@
 						onclick={() => goToPage(totalPages)}
 						disabled={page >= totalPages}
 						aria-label="Halaman Terakhir"
-						class="inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
+						class="hidden sm:inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
 					>
 						<ChevronsRightIcon class="size-3.5" />
 					</button>

@@ -5,6 +5,8 @@
 	import * as Tabs from "$lib/components/ui/tabs";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 	import * as Dialog from "$lib/components/ui/dialog";
+	import * as Sheet from "$lib/components/ui/sheet";
+	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
 	import { Card, CardHeader, CardTitle, CardContent } from "$lib/components/ui/card";
 	import { Badge } from "$lib/components/ui/badge";
 	import { Button } from "$lib/components/ui/button";
@@ -163,6 +165,7 @@
 	}
 
 	// Dialog state
+	let isMobileSidebarOpen = $state(false);
 	let isDeleteDialogOpen = $state(false);
 	let isResetDialogOpen = $state(false);
 
@@ -286,6 +289,18 @@
 
 			<!-- Action Buttons -->
 			<div class="flex items-center gap-1 sm:gap-2 shrink-0">
+				<!-- Tombol Menu & Profil untuk Mobile / Tablet -->
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={() => (isMobileSidebarOpen = true)}
+					class="lg:hidden gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg border-border/80 text-xs font-semibold text-foreground hover:bg-muted active:scale-95 shrink-0 shadow-2xs"
+					title="Buka menu navigasi dan profil personal"
+				>
+					<SlidersHorizontalIcon class="size-3.5 text-muted-foreground" />
+					<span class="text-xs">Profil</span>
+				</Button>
+
 				<!-- Theme Toggle -->
 				<button
 					onclick={toggleMode}
@@ -306,40 +321,40 @@
 					variant="outline"
 					size="sm"
 					onclick={copyGuideLink}
-					class="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border-border/80 text-xs font-medium text-foreground hover:bg-muted active:scale-95 shrink-0"
+					class="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg border-border/80 text-xs font-medium text-foreground hover:bg-muted active:scale-95 shrink-0"
 					title="Salin tautan hasil panduan"
 				>
 					<Share2Icon class="size-3.5 text-muted-foreground" />
 					<span class="hidden sm:inline">Bagikan</span>
 				</Button>
 
-				<!-- Cetak / PDF -->
+				<!-- Cetak / PDF (Hidden on Mobile) -->
 				<Button
 					variant="outline"
 					size="sm"
 					onclick={handlePrint}
-					class="gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border-border/80 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 shrink-0"
+					class="hidden md:inline-flex gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border-border/80 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 shrink-0"
 					title="Cetak atau simpan sebagai PDF"
 				>
 					<PrinterIcon class="size-3.5" />
-					<span class="hidden md:inline">Cetak / PDF</span>
+					<span>Cetak / PDF</span>
 				</Button>
 
 				<!-- Check Baru -->
 				<Button
 					href="/mulai"
 					size="sm"
-					class="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90 active:scale-95 shadow-none shrink-0"
+					class="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90 active:scale-95 shadow-none shrink-0"
 				>
 					<RotateCcwIcon class="size-3.5" />
 					<span class="hidden sm:inline">Check Baru</span>
 				</Button>
 
-				<!-- Hapus Data Button (Icon Only) -->
+				<!-- Hapus Data Button (Icon Only, Hidden on Mobile Header as it is in Drawer) -->
 				<button
 					type="button"
 					onclick={() => (isDeleteDialogOpen = true)}
-					class="inline-flex size-8 sm:size-9 items-center justify-center rounded-lg border border-border/70 text-muted-foreground transition-all hover:text-destructive hover:bg-destructive/10 active:scale-95 shrink-0"
+					class="hidden sm:inline-flex size-8 sm:size-9 items-center justify-center rounded-lg border border-border/70 text-muted-foreground transition-all hover:text-destructive hover:bg-destructive/10 active:scale-95 shrink-0"
 					title="Hapus data panduan ini"
 				>
 					<Trash2Icon class="size-3.5" />
@@ -353,8 +368,8 @@
 			<!-- Header Banner Hasil -->
 			<div class="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 transition-colors">
 				<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5 sm:gap-6">
-					<div class="space-y-2.5 sm:space-y-3">
-						<div class="flex flex-wrap items-center gap-2">
+					<div class="space-y-3 sm:space-y-3.5 min-w-0">
+						<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
 							<span class="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-stone-100/80 dark:bg-stone-800/60 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-medium text-foreground">
 								<span class="size-1.5 rounded-full bg-emerald-500"></span>
 								<span>Panduan Tersimpan</span>
@@ -363,40 +378,40 @@
 								{guide.summary.genderDesc}
 							</span>
 
-							<!-- Tone Switcher Quick Pills -->
-							<div class="inline-flex items-center gap-1 p-0.5 rounded-full border border-border/80 bg-stone-100 dark:bg-stone-800/80">
-								<button
-									type="button"
-									onclick={() => (activeUndertone = "hangat")}
-									class="px-2.5 py-0.5 rounded-full text-[11px] transition-all {activeUndertone === 'hangat' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
-									title="Ganti ke Undertone Hangat"
-								>
-									☀️ Warm
-								</button>
-								<button
-									type="button"
-									onclick={() => (activeUndertone = "dingin")}
-									class="px-2.5 py-0.5 rounded-full text-[11px] transition-all {activeUndertone === 'dingin' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
-									title="Ganti ke Undertone Dingin"
-								>
-									❄️ Cool
-								</button>
-								<button
-									type="button"
-									onclick={() => (activeUndertone = "netral")}
-									class="px-2.5 py-0.5 rounded-full text-[11px] transition-all {activeUndertone === 'netral' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
-									title="Ganti ke Undertone Netral"
-								>
-									⚖️ Neutral
-								</button>
-							</div>
-
 							{#if guide.photoAnalysis}
 								<span class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-stone-50 dark:bg-stone-900/40 px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-medium text-foreground">
 									<span class="size-2 rounded-full border border-background shadow-xs shrink-0" style="background-color: {guide.photoAnalysis.skinHex}"></span>
 									<span>Tone Kulit: {guide.photoAnalysis.skinHex}</span>
 								</span>
 							{/if}
+						</div>
+
+						<!-- Tone Switcher Segmented Control (Responsive Full Width on Mobile) -->
+						<div class="w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-1 p-1 rounded-xl border border-border/80 bg-stone-100 dark:bg-stone-800/80">
+							<button
+								type="button"
+								onclick={() => (activeUndertone = "hangat")}
+								class="flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs transition-all {activeUndertone === 'hangat' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
+								title="Ganti ke Undertone Hangat"
+							>
+								☀️ Warm
+							</button>
+							<button
+								type="button"
+								onclick={() => (activeUndertone = "dingin")}
+								class="flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs transition-all {activeUndertone === 'dingin' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
+								title="Ganti ke Undertone Dingin"
+							>
+								❄️ Cool
+							</button>
+							<button
+								type="button"
+								onclick={() => (activeUndertone = "netral")}
+								class="flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs transition-all {activeUndertone === 'netral' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
+								title="Ganti ke Undertone Netral"
+							>
+								⚖️ Neutral
+							</button>
 						</div>
 
 						<h1 class="font-serif text-2xl sm:text-4xl lg:text-5xl font-normal text-foreground tracking-tight leading-[1.15]">
@@ -407,13 +422,13 @@
 						</p>
 					</div>
 
-					<!-- Ratio Stat Card -->
-					<div class="flex shrink-0 items-center justify-around sm:justify-start gap-4 sm:gap-6 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-3.5 sm:p-5 w-full md:w-auto">
-						<div class="text-center pr-4 sm:pr-6 border-r border-border/70">
+					<!-- Ratio Stat Card (Clean Grid on Mobile) -->
+					<div class="grid grid-cols-2 sm:flex sm:items-center sm:justify-start gap-3 sm:gap-6 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-3 sm:p-5 w-full md:w-auto shrink-0 text-center">
+						<div class="pr-3 sm:pr-6 border-r border-border/70">
 							<div class="font-serif text-2xl sm:text-4xl font-normal text-foreground">{guide.summary.itemCount}</div>
 							<div class="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5 font-medium">Item Inti</div>
 						</div>
-						<div class="text-center">
+						<div>
 							<div class="font-serif text-2xl sm:text-4xl font-normal text-foreground">{guide.summary.outfitCount}+</div>
 							<div class="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5 font-medium">Kombinasi Look</div>
 						</div>
@@ -421,204 +436,253 @@
 				</div>
 			</div>
 
+			{#snippet sidebarContent(isMobile = false)}
+				<!-- User Profile Summary in Sidebar -->
+				<div class="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-2xs">
+					<div class="flex items-center justify-between">
+						<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Profil Analisis</span>
+						<span class="rounded border border-border/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">
+							{guide.summary.genderDesc}
+						</span>
+					</div>
+					<div class="flex items-center gap-2.5">
+						<div class="flex size-9 items-center justify-center rounded-lg border border-border bg-stone-50 dark:bg-stone-800 text-foreground shrink-0 shadow-2xs">
+							<PaletteIcon class="size-4" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<div class="text-xs font-semibold text-foreground leading-tight truncate">Undertone {guide.palette.undertone}</div>
+							<div class="text-[10px] text-muted-foreground truncate">{guide.palette.name}</div>
+						</div>
+					</div>
+
+					<!-- Undertone Quick Switcher in Sidebar -->
+					<div class="pt-2 border-t border-border/60">
+						<div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5 font-medium">
+							<span>Ganti Tone Kulit:</span>
+							<span class="text-[9px] uppercase tracking-wider font-semibold text-foreground">Reaktif</span>
+						</div>
+						<div class="grid grid-cols-3 gap-1">
+							<button
+								type="button"
+								onclick={() => (activeUndertone = "hangat")}
+								class="py-1.5 px-1 rounded-md text-[10px] font-medium transition-all text-center {activeUndertone === 'hangat' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
+							>
+								☀️ Warm
+							</button>
+							<button
+								type="button"
+								onclick={() => (activeUndertone = "dingin")}
+								class="py-1.5 px-1 rounded-md text-[10px] font-medium transition-all text-center {activeUndertone === 'dingin' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
+							>
+								❄️ Cool
+							</button>
+							<button
+								type="button"
+								onclick={() => (activeUndertone = "netral")}
+								class="py-1.5 px-1 rounded-md text-[10px] font-medium transition-all text-center {activeUndertone === 'netral' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
+							>
+								⚖️ Neutral
+							</button>
+						</div>
+					</div>
+
+					<!-- Mini Color Swatches -->
+					<div class="pt-2 border-t border-border/60">
+						<div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5 font-medium">
+							<span>Palet Rekomendasi</span>
+							<span class="text-[9px] uppercase tracking-wider text-muted-foreground">6 Warna</span>
+						</div>
+						<div class="flex items-center gap-1.5">
+							{#each guide.palette.baseColors.slice(0, 4) as col}
+								<span class="size-4 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}" title={col.name}></span>
+							{/each}
+							{#each guide.palette.accentColors.slice(0, 2) as col}
+								<span class="size-4 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}" title="Aksen: {col.name}"></span>
+							{/each}
+						</div>
+					</div>
+				</div>
+
+				<!-- Vertical Navigation Menu in Sidebar -->
+				<div class="rounded-xl border border-border/80 bg-card p-1.5 space-y-0.5 shadow-2xs">
+					<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 py-1.5 block">
+						Bagian Panduan
+					</span>
+					<button
+						type="button"
+						onclick={() => { activeGuideTab = "outfit"; if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'outfit' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
+					>
+						<div class="flex items-center gap-2.5">
+							<CompassIcon class="size-3.5" />
+							<span>Katalog Outfit & Warna</span>
+						</div>
+						<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'outfit' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
+							{guide.outfits.length}
+						</span>
+					</button>
+
+					<button
+						type="button"
+						onclick={() => { activeGuideTab = "wardrobe"; if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'wardrobe' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
+					>
+						<div class="flex items-center gap-2.5">
+							<ShirtIcon class="size-3.5" />
+							<span>Wardrobe Inti</span>
+						</div>
+						<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'wardrobe' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
+							{guide.capsule?.length || 12}
+						</span>
+					</button>
+
+					<button
+						type="button"
+						onclick={() => { activeGuideTab = "belanja"; if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'belanja' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
+					>
+						<div class="flex items-center gap-2.5">
+							<ShoppingBagIcon class="size-3.5" />
+							<span>Daftar Belanja</span>
+						</div>
+						<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'belanja' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
+							{ownedCount}/{totalItemsCount}
+						</span>
+					</button>
+
+					<button
+						type="button"
+						onclick={() => { activeGuideTab = "warna"; if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'warna' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
+					>
+						<div class="flex items-center gap-2.5">
+							<PaletteIcon class="size-3.5" />
+							<span>Detail Warna Personal</span>
+						</div>
+					</button>
+
+					<button
+						type="button"
+						onclick={() => { activeGuideTab = "ringkasan"; if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'ringkasan' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
+					>
+						<div class="flex items-center gap-2.5">
+							<InfoIcon class="size-3.5" />
+							<span>Ringkasan Gaya</span>
+						</div>
+					</button>
+				</div>
+
+				<!-- Wardrobe Checklist Progress Card in Sidebar -->
+				<div class="rounded-xl border border-border/80 bg-card p-4 space-y-2.5 shadow-2xs">
+					<div class="flex items-center justify-between text-xs">
+						<span class="font-medium text-foreground">Progres Koleksi</span>
+						<span class="font-mono text-muted-foreground">{ownedCount}/{totalItemsCount}</span>
+					</div>
+					<Progress value={ownedPercentage} class="h-1.5 bg-stone-100 dark:bg-stone-800" />
+					<p class="text-[11px] text-muted-foreground leading-relaxed font-normal">
+						{ownedPercentage}% dari {totalItemsCount} item inti sudah kamu miliki di lemari.
+					</p>
+				</div>
+
+				<!-- Quick Actions in Sidebar -->
+				<div class="rounded-xl border border-border/80 bg-card p-2.5 space-y-1.5 shadow-2xs">
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={() => { copyGuideLink(); if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full justify-start gap-2 rounded-lg text-xs font-medium border-border/80 text-foreground hover:bg-muted"
+					>
+						<Share2Icon class="size-3.5 text-muted-foreground" />
+						<span>Salin Link Panduan</span>
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={() => { handlePrint(); if (isMobile) isMobileSidebarOpen = false; }}
+						class="w-full justify-start gap-2 rounded-lg text-xs font-medium border-border/80 text-foreground hover:bg-muted"
+					>
+						<PrinterIcon class="size-3.5 text-muted-foreground" />
+						<span>Cetak / Simpan PDF</span>
+					</Button>
+					{#if isMobile}
+						<Button
+							href="/mulai"
+							size="sm"
+							class="w-full justify-start gap-2 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90"
+						>
+							<RotateCcwIcon class="size-3.5" />
+							<span>Check Baru</span>
+						</Button>
+						<Button
+							variant="ghost"
+							size="sm"
+							onclick={() => { isMobileSidebarOpen = false; isDeleteDialogOpen = true; }}
+							class="w-full justify-start gap-2 rounded-lg text-xs font-medium text-destructive hover:bg-destructive/10"
+						>
+							<Trash2Icon class="size-3.5" />
+							<span>Hapus Data Panduan</span>
+						</Button>
+					{/if}
+				</div>
+			{/snippet}
+
 			<!-- Tabs Navigasi 5 Bagian — DEFAULT OUTFIT & WARNA -->
 			<Tabs.Root bind:value={activeGuideTab} class="w-full">
-				<!-- MOBILE TABS LIST (smooth horizontal scroll) -->
-				<Tabs.List class="lg:hidden flex w-full overflow-x-auto touch-pan-x h-auto p-1 bg-stone-100/70 dark:bg-stone-900/60 rounded-xl mb-6 no-print gap-1 border border-border/70 scrollbar-none">
-					<Tabs.Trigger value="outfit" class="shrink-0 gap-1.5 py-2 px-3 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-						<CompassIcon class="size-3.5" />
-						<span>Outfit & Warna ({guide.outfits.length})</span>
-					</Tabs.Trigger>
-					<Tabs.Trigger value="wardrobe" class="shrink-0 gap-1.5 py-2 px-3 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-						<ShirtIcon class="size-3.5" />
-						<span>Wardrobe ({guide.capsule?.length || 12})</span>
-					</Tabs.Trigger>
-					<Tabs.Trigger value="belanja" class="shrink-0 gap-1.5 py-2 px-3 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-						<ShoppingBagIcon class="size-3.5" />
-						<span>Belanja ({ownedCount}/{totalItemsCount})</span>
-					</Tabs.Trigger>
-					<Tabs.Trigger value="warna" class="shrink-0 gap-1.5 py-2 px-3 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-						<PaletteIcon class="size-3.5" />
-						<span>Detail Warna</span>
-					</Tabs.Trigger>
-					<Tabs.Trigger value="ringkasan" class="shrink-0 gap-1.5 py-2 px-3 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-						<InfoIcon class="size-3.5" />
-						<span>Ringkasan</span>
-					</Tabs.Trigger>
-				</Tabs.List>
+				<!-- STICKY MOBILE NAVIGATION BAR (horizontal scroll tabs + drawer trigger) -->
+				<div class="lg:hidden sticky top-14 sm:top-16 z-30 -mx-3 px-3 py-2 bg-background/95 backdrop-blur-md border-b border-border/70 mb-4 transition-all flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none no-print">
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={() => (isMobileSidebarOpen = true)}
+						class="shrink-0 gap-1.5 h-8 px-2.5 rounded-lg border-border/80 text-xs font-semibold text-foreground hover:bg-muted bg-card shadow-2xs"
+					>
+						<SlidersHorizontalIcon class="size-3 text-muted-foreground" />
+						<span>Profil</span>
+					</Button>
+
+					<Tabs.List class="flex h-auto p-0.5 bg-stone-100/70 dark:bg-stone-900/60 rounded-lg gap-1 border border-border/70">
+						<Tabs.Trigger value="outfit" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<CompassIcon class="size-3" />
+							<span>Outfit ({guide.outfits.length})</span>
+						</Tabs.Trigger>
+						<Tabs.Trigger value="wardrobe" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<ShirtIcon class="size-3" />
+							<span>Wardrobe ({guide.capsule?.length || 12})</span>
+						</Tabs.Trigger>
+						<Tabs.Trigger value="belanja" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<ShoppingBagIcon class="size-3" />
+							<span>Belanja ({ownedCount}/{totalItemsCount})</span>
+						</Tabs.Trigger>
+						<Tabs.Trigger value="warna" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<PaletteIcon class="size-3" />
+							<span>Warna</span>
+						</Tabs.Trigger>
+						<Tabs.Trigger value="ringkasan" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<InfoIcon class="size-3" />
+							<span>Ringkasan</span>
+						</Tabs.Trigger>
+					</Tabs.List>
+				</div>
+
+				<!-- MOBILE SIDEBAR SHEET DRAWER -->
+				<Sheet.Root bind:open={isMobileSidebarOpen}>
+					<Sheet.Content side="left" class="w-[88vw] max-w-sm p-4 overflow-y-auto space-y-4">
+						<Sheet.Header class="text-left pb-2 border-b border-border/70">
+							<Sheet.Title class="font-serif text-lg">Menu Panduan & Profil</Sheet.Title>
+							<Sheet.Description class="text-xs text-muted-foreground">
+								Akses cepat profil color tone, progres lemari, dan navigasi lookbook.
+							</Sheet.Description>
+						</Sheet.Header>
+						{@render sidebarContent(true)}
+					</Sheet.Content>
+				</Sheet.Root>
 
 				<!-- 2-COLUMN LAYOUT ON DESKTOP -->
 				<div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
 					<!-- DESKTOP STICKY SIDEBAR NAVIGATION -->
-					<aside class="hidden lg:block lg:col-span-3 space-y-4 sticky top-24 self-start no-print">
-						<!-- User Profile Summary in Sidebar -->
-						<div class="rounded-xl border border-border/80 bg-card p-4 space-y-3">
-							<div class="flex items-center justify-between">
-								<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Profil Analisis</span>
-								<span class="rounded border border-border/80 px-1.5 py-0.2 text-[10px] font-medium text-muted-foreground capitalize">
-									{guide.summary.genderDesc}
-								</span>
-							</div>
-							<div class="flex items-center gap-2.5">
-								<div class="flex size-8 items-center justify-center rounded-lg border border-border bg-stone-50 dark:bg-stone-800 text-foreground">
-									<PaletteIcon class="size-3.5" />
-								</div>
-								<div class="min-w-0 flex-1">
-									<div class="text-xs font-semibold text-foreground leading-tight truncate">Undertone {guide.palette.undertone}</div>
-									<div class="text-[10px] text-muted-foreground truncate">{guide.palette.name}</div>
-								</div>
-							</div>
-
-							<!-- Undertone Quick Switcher in Sidebar -->
-							<div class="pt-2 border-t border-border/60">
-								<div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5 font-medium">
-									<span>Ganti Tone Kulit:</span>
-								</div>
-								<div class="grid grid-cols-3 gap-1">
-									<button
-										type="button"
-										onclick={() => (activeUndertone = "hangat")}
-										class="py-1 px-1.5 rounded text-[10px] font-medium transition-all text-center {activeUndertone === 'hangat' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
-									>
-										Warm
-									</button>
-									<button
-										type="button"
-										onclick={() => (activeUndertone = "dingin")}
-										class="py-1 px-1.5 rounded text-[10px] font-medium transition-all text-center {activeUndertone === 'dingin' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
-									>
-										Cool
-									</button>
-									<button
-										type="button"
-										onclick={() => (activeUndertone = "netral")}
-										class="py-1 px-1.5 rounded text-[10px] font-medium transition-all text-center {activeUndertone === 'netral' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
-									>
-										Neutral
-									</button>
-								</div>
-							</div>
-
-							<!-- Mini Color Swatches -->
-							<div class="pt-2 border-t border-border/60">
-								<div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5 font-medium">
-									<span>Palet Rekomendasi</span>
-									<span class="text-[9px] uppercase tracking-wider text-muted-foreground">6 Warna</span>
-								</div>
-								<div class="flex items-center gap-1.5">
-									{#each guide.palette.baseColors.slice(0, 4) as col}
-										<span class="size-4 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}" title={col.name}></span>
-									{/each}
-									{#each guide.palette.accentColors.slice(0, 2) as col}
-										<span class="size-4 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}" title="Aksen: {col.name}"></span>
-									{/each}
-								</div>
-							</div>
-						</div>
-
-						<!-- Vertical Navigation Menu in Sidebar -->
-						<div class="rounded-xl border border-border/80 bg-card p-1.5 space-y-0.5">
-							<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 py-1.5 block">
-								Bagian Panduan
-							</span>
-							<button
-								type="button"
-								onclick={() => (activeGuideTab = "outfit")}
-								class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'outfit' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-							>
-								<div class="flex items-center gap-2.5">
-									<CompassIcon class="size-3.5" />
-									<span>Katalog Outfit & Warna</span>
-								</div>
-								<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'outfit' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
-									{guide.outfits.length}
-								</span>
-							</button>
-
-							<button
-								type="button"
-								onclick={() => (activeGuideTab = "wardrobe")}
-								class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'wardrobe' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-							>
-								<div class="flex items-center gap-2.5">
-									<ShirtIcon class="size-3.5" />
-									<span>Wardrobe Inti</span>
-								</div>
-								<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'wardrobe' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
-									{guide.capsule?.length || 12}
-								</span>
-							</button>
-
-							<button
-								type="button"
-								onclick={() => (activeGuideTab = "belanja")}
-								class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'belanja' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-							>
-								<div class="flex items-center gap-2.5">
-									<ShoppingBagIcon class="size-3.5" />
-									<span>Daftar Belanja</span>
-								</div>
-								<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'belanja' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
-									{ownedCount}/{totalItemsCount}
-								</span>
-							</button>
-
-							<button
-								type="button"
-								onclick={() => (activeGuideTab = "warna")}
-								class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'warna' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-							>
-								<div class="flex items-center gap-2.5">
-									<PaletteIcon class="size-3.5" />
-									<span>Detail Warna Personal</span>
-								</div>
-							</button>
-
-							<button
-								type="button"
-								onclick={() => (activeGuideTab = "ringkasan")}
-								class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'ringkasan' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-							>
-								<div class="flex items-center gap-2.5">
-									<InfoIcon class="size-3.5" />
-									<span>Ringkasan Gaya</span>
-								</div>
-							</button>
-						</div>
-
-						<!-- Wardrobe Checklist Progress Card in Sidebar -->
-						<div class="rounded-xl border border-border/80 bg-card p-4 space-y-2.5">
-							<div class="flex items-center justify-between text-xs">
-								<span class="font-medium text-foreground">Progres Koleksi</span>
-								<span class="font-mono text-muted-foreground">{ownedCount}/{totalItemsCount}</span>
-							</div>
-							<Progress value={ownedPercentage} class="h-1.5 bg-stone-100 dark:bg-stone-800" />
-							<p class="text-[11px] text-muted-foreground leading-relaxed font-normal">
-								{ownedPercentage}% dari {totalItemsCount} item inti sudah kamu miliki di lemari.
-							</p>
-						</div>
-
-						<!-- Quick Actions in Sidebar -->
-						<div class="rounded-xl border border-border/80 bg-card p-2.5 space-y-1.5">
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={copyGuideLink}
-								class="w-full justify-start gap-2 rounded-lg text-xs font-medium border-border/80 text-foreground hover:bg-muted"
-							>
-								<Share2Icon class="size-3.5 text-muted-foreground" />
-								<span>Salin Link Panduan</span>
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={handlePrint}
-								class="w-full justify-start gap-2 rounded-lg text-xs font-medium border-border/80 text-foreground hover:bg-muted"
-							>
-								<PrinterIcon class="size-3.5 text-muted-foreground" />
-								<span>Cetak / Simpan PDF</span>
-							</Button>
-						</div>
+					<aside class="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start no-print">
+						{@render sidebarContent(false)}
 					</aside>
 
 					<!-- MAIN CONTENT AREA FOR TABS -->
@@ -1054,7 +1118,7 @@
 									</CardContent>
 								</div>
 
-								<div class="border-t border-border/60 p-3 sm:p-3.5 bg-stone-50/40 dark:bg-stone-900/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+								<div class="border-t border-border/60 p-3 sm:p-3.5 bg-stone-50/40 dark:bg-stone-900/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
 									<div class="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
 										{#each item.occasions as occ}
 											<span class="rounded bg-background px-2 py-0.5 border border-border/70 capitalize font-normal text-[10px]">
@@ -1068,7 +1132,7 @@
 											href={item.affiliateUrl}
 											target="_blank"
 											rel="noopener noreferrer nofollow"
-											class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
+											class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-2 sm:py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
 											title="Beli {item.name} di Shopee"
 										>
 											<ShoppingBagIcon class="size-3" />
@@ -1239,7 +1303,7 @@
 					{/if}
 
 					<!-- Filter Situasi dengan Scroll Horizontal di Mobile -->
-					<div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none flex-nowrap sm:flex-wrap border-b border-border/70 no-print">
+					<div class="flex items-center gap-1.5 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none flex-nowrap sm:flex-wrap border-b border-border/70 no-print">
 						{#each occasionFilters as f}
 							{@const count = f.id === "semua" ? guide.outfits.length : guide.outfits.filter(o => o.occasion === f.id).length}
 							<button
@@ -1306,7 +1370,7 @@
 												type="button"
 												onclick={() => triggerTryOn(outfit.id)}
 												disabled={isGeneratingOutfitId === outfit.id}
-												class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 px-3 py-1 text-[11px] font-medium text-foreground transition active:scale-95 disabled:opacity-50"
+												class="inline-flex shrink-0 items-center gap-1 sm:gap-1.5 rounded-full border border-border/80 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 px-2.5 sm:px-3 py-1 text-[11px] font-medium text-foreground transition active:scale-95 disabled:opacity-50"
 												title="Simulasi visual foto look dikenakan"
 											>
 												{#if isGeneratingOutfitId === outfit.id}
@@ -1314,7 +1378,8 @@
 													<span>Merender...</span>
 												{:else}
 													<CameraIcon class="size-3 text-muted-foreground" />
-													<span>{aiImages[outfit.id] ? "Simulasi Ulang" : "Simulasi Dipakai"}</span>
+													<span class="hidden sm:inline">{aiImages[outfit.id] ? "Simulasi Ulang" : "Simulasi Dipakai"}</span>
+													<span class="sm:hidden">{aiImages[outfit.id] ? "Ulang" : "AI Try-On"}</span>
 												{/if}
 											</button>
 										</div>
@@ -1356,10 +1421,10 @@
 											<ul class="space-y-2">
 												{#if outfit.items}
 													{#each outfit.items as it}
-														<li class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-2.5 text-xs transition-colors hover:bg-stone-100/60 dark:hover:bg-stone-800/50">
-															<div class="flex items-center gap-2.5 min-w-0 flex-1">
+														<li class="flex items-center justify-between gap-2 sm:gap-2.5 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-2 sm:p-2.5 text-xs transition-colors hover:bg-stone-100/60 dark:hover:bg-stone-800/50">
+															<div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
 																<!-- Thumbnail Foto Produk Pakaian -->
-																<div class="size-10 sm:size-11 rounded-lg border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+																<div class="size-11 sm:size-12 rounded-lg border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 																	<img
 																		src={it.imageUrl || `/images/real/items/${it.id.startsWith("outer-1") ? "blazer" : it.id.startsWith("outer-2") ? "cardigan" : it.id.startsWith("top-1") ? "shirt" : it.id.startsWith("top-2") ? "blouse" : it.id.startsWith("top-3") ? "tshirt" : it.id.startsWith("top-4") ? "knitwear" : it.id.startsWith("bottom-1") ? "trousers" : it.id.startsWith("bottom-2") ? "denim" : it.id.startsWith("bottom-3") ? "chinos" : it.id.startsWith("shoes-1") ? "sneakers" : it.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
 																		alt={it.name}
@@ -1369,16 +1434,16 @@
 																</div>
 																<div class="min-w-0 flex-1">
 																	<div class="flex items-center gap-1.5 flex-wrap">
-																		<span class="font-medium text-foreground text-xs leading-snug">{it.name}</span>
+																		<span class="font-medium text-foreground text-xs leading-snug line-clamp-1">{it.name}</span>
 																		<span class="rounded bg-muted px-1.5 py-0.2 text-[9px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
 																			{it.category}
 																		</span>
 																	</div>
 																	<!-- Rekomendasi Warna Colortone & Estimasi Harga -->
-																	<div class="flex items-center gap-2 mt-0.5 flex-wrap text-[11px]">
+																	<div class="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap text-[11px]">
 																		<span class="inline-flex items-center gap-1 text-muted-foreground font-normal">
 																			<span class="size-2 rounded-full border border-black/20 shrink-0" style="background-color: {getColorHex(it.color)}"></span>
-																			<span>Warna: <strong class="font-medium text-foreground">{it.color || 'Netral'}</strong></span>
+																			<span class="truncate max-w-[95px] sm:max-w-none">Warna: <strong class="font-medium text-foreground">{it.color || 'Netral'}</strong></span>
 																		</span>
 																		{#if it.priceEstimate}
 																			<span class="font-mono text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.2 rounded border border-border/60">
@@ -1394,11 +1459,12 @@
 																	href={it.affiliateUrl}
 																	target="_blank"
 																	rel="noopener noreferrer nofollow"
-																	class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 self-end sm:self-center"
+																	class="inline-flex shrink-0 items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold shadow-2xs transition active:scale-95"
 																	title="Beli {it.name} di Shopee"
 																>
 																	<ShoppingBagIcon class="size-3" />
-																	<span>Beli di Shopee</span>
+																	<span class="hidden sm:inline">Shopee</span>
+																	<span class="sm:hidden">Beli</span>
 																	<ExternalLinkIcon class="size-2.5 opacity-80" />
 																</a>
 															{/if}
@@ -1491,25 +1557,26 @@
 							</p>
 						</div>
 
-						<!-- Daftar Checklist Belanja -->
-						<div class="mt-6 divide-y divide-border/60">
+						<!-- Daftar Checklist Belanja (Responsive Product Cards) -->
+						<div class="mt-6 space-y-3">
 							{#each guide.shopping as item (item.id)}
 								{@const isChecked = Boolean(shoppingChecks[item.id])}
-								<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 py-4 transition-colors {isChecked ? 'opacity-50' : ''}">
-									<div class="flex items-start gap-3 min-w-0 flex-1">
+								<div class="rounded-xl border border-border/70 bg-card p-3 sm:p-4 transition-all hover:border-foreground/20 space-y-2.5 shadow-2xs {isChecked ? 'opacity-50 bg-stone-50/50 dark:bg-stone-900/20' : ''}">
+									<div class="flex items-start gap-2.5 sm:gap-3 min-w-0">
+										<!-- Checkbox with larger tap target -->
 										<button
 											type="button"
 											onclick={() => handleToggleCheck(item.id)}
-											class="flex size-5 shrink-0 items-center justify-center rounded border transition-all mt-1 sm:mt-0.5 {isChecked ? 'border-foreground bg-foreground text-background' : 'border-border/80 bg-background hover:border-foreground/50'}"
-											aria-label="Centang kepemilikan item"
+											class="flex size-6 shrink-0 items-center justify-center rounded-md border transition-all mt-0.5 {isChecked ? 'border-foreground bg-foreground text-background' : 'border-border/80 bg-background hover:border-foreground/50'}"
+											aria-label="Centang kepemilikan item {item.name}"
 										>
 											{#if isChecked}
-												<CheckIcon class="size-3.5 stroke-[2.5]" />
+												<CheckIcon class="size-4 stroke-[2.5]" />
 											{/if}
 										</button>
 
 										<!-- Foto Thumbnail Item Belanja -->
-										<div class="size-11 sm:size-12 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+										<div class="size-11 sm:size-13 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 											<img
 												src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
 												alt={item.name}
@@ -1526,12 +1593,12 @@
 												<span class="rounded border border-border/80 px-1.5 py-0.2 text-[9px] sm:text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
 													Prioritas {item.priority}
 												</span>
-												<span class="inline-flex items-center gap-1 text-xs text-muted-foreground font-normal">
+												<span class="inline-flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground font-normal">
 													<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.colorSuggestion)}"></span>
 													<span>Warna: <strong class="font-semibold text-foreground">{item.colorSuggestion}</strong></span>
 												</span>
 												{#if item.priceEstimate}
-													<span class="text-[10px] sm:text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-border/70">
+													<span class="text-[10px] sm:text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.2 rounded border border-border/70">
 														{item.priceEstimate}
 													</span>
 												{/if}
@@ -1544,9 +1611,9 @@
 									</div>
 
 									<!-- Action: Look Count & Beli Button -->
-									<div class="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 pl-8 sm:pl-0 pt-1 sm:pt-0">
-										<span class="text-xs font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded border border-border/60">
-											{item.outfitCount} Look
+									<div class="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+										<span class="text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded border border-border/60">
+											Dipakai di {item.outfitCount} Look
 										</span>
 
 										{#if item.affiliateUrl}
@@ -1554,7 +1621,7 @@
 												href={item.affiliateUrl}
 												target="_blank"
 												rel="noopener noreferrer nofollow"
-												class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95"
+												class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
 												title="Beli {item.name} di Shopee"
 											>
 												<ShoppingBagIcon class="size-3" />
