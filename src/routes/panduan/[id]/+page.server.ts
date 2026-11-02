@@ -7,7 +7,10 @@ import {
 	toggleShoppingCheck,
 	deleteSubmissionData,
 	getAllAIGeneratedImages,
-	saveAIGeneratedImage
+	saveAIGeneratedImage,
+	getAffiliateMap,
+	getActiveAdminOutfits,
+	enrichStyleGuide
 } from "$lib/server/db/queries";
 import { generateStyleGuide } from "$lib/engine";
 import { checkRateLimit } from "$lib/server/rate-limit";
@@ -50,16 +53,32 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		};
 	}
 
+	const affiliateMap = await getAffiliateMap();
+	const activeAdminOutfits = await getActiveAdminOutfits();
+	const adminTemplates = activeAdminOutfits.length > 0 ? activeAdminOutfits : undefined;
+
 	const guidesByTone: Record<Undertone, StyleGuideResult> = {
-		hangat: generateStyleGuide({ ...answers, undertone: "hangat" }),
-		dingin: generateStyleGuide({ ...answers, undertone: "dingin" }),
-		netral: generateStyleGuide({ ...answers, undertone: "netral" })
+		hangat: enrichStyleGuide(
+			generateStyleGuide({ ...answers, undertone: "hangat" }, adminTemplates),
+			affiliateMap,
+			answers.gender
+		),
+		dingin: enrichStyleGuide(
+			generateStyleGuide({ ...answers, undertone: "dingin" }, adminTemplates),
+			affiliateMap,
+			answers.gender
+		),
+		netral: enrichStyleGuide(
+			generateStyleGuide({ ...answers, undertone: "netral" }, adminTemplates),
+			affiliateMap,
+			answers.gender
+		)
 	};
 
 	const currentTone = answers.undertone || "hangat";
 	const activeGuide = guidesByTone[currentTone];
 
-	// Gabungkan data dari DB dengan summary
+	// Gabungkan data dari DB dengan summary dan data tone aktif
 	const result: StyleGuideResult = {
 		summary: activeGuide.summary,
 		palette: dbResult.palette || activeGuide.palette,

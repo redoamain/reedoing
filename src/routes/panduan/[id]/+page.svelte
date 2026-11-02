@@ -31,6 +31,8 @@
 	import SnowflakeIcon from "@lucide/svelte/icons/snowflake";
 	import ScaleIcon from "@lucide/svelte/icons/scale";
 	import Loader2Icon from "@lucide/svelte/icons/loader-2";
+	import SparklesIcon from "@lucide/svelte/icons/sparkles";
+	import TagIcon from "@lucide/svelte/icons/tag";
 	import { toggleMode, mode } from "mode-watcher";
 
 	import type { PageData } from "./$types";
@@ -68,6 +70,80 @@
 	// State filter situasi outfit — LANGSUNG TAMPILKAN OUTFIT & WARNA REKOMENDASI SECARA DEFAULT
 	let selectedOccasion = $state<string>("semua");
 	let activeGuideTab = $state<string>("outfit");
+
+	// Helper untuk mendapatkan kode hex warna pakaian agar dapat ditampilkan sebagai swatch dot
+	function getColorHex(colorName: string): string {
+		const lower = (colorName || "").toLowerCase();
+		const allColors = [
+			...(guide?.palette?.baseColors || []),
+			...(guide?.palette?.accentColors || [])
+		];
+		const match = allColors.find(
+			(c) =>
+				lower.includes(c.name.toLowerCase()) ||
+				c.name.toLowerCase().includes(lower)
+		);
+		if (match) return match.hex;
+
+		if (lower.includes("broken white") || lower.includes("ecru") || lower.includes("gading")) return "#F9F6F0";
+		if (lower.includes("pure white") || lower.includes("putih bersih") || lower.includes("crisp")) return "#FFFFFF";
+		if (lower.includes("espresso") || lower.includes("cokelat") || lower.includes("brown")) return "#3D2B1F";
+		if (lower.includes("navy") || lower.includes("biru gelap") || lower.includes("biru")) return "#1B2A47";
+		if (lower.includes("charcoal") || lower.includes("arang") || lower.includes("dark grey")) return "#33383F";
+		if (lower.includes("camel") || lower.includes("khaki") || lower.includes("oat")) return "#C2A27E";
+		if (lower.includes("taupe") || lower.includes("smokey") || lower.includes("fog") || lower.includes("heather")) return "#CBD2D9";
+		if (lower.includes("terracotta") || lower.includes("bata")) return "#B85D43";
+		if (lower.includes("amber") || lower.includes("mustard") || lower.includes("gold")) return "#D49B4B";
+		if (lower.includes("olive") || lower.includes("sage")) return "#4E5340";
+		if (lower.includes("slate") || lower.includes("dusty blue")) return "#4D6B88";
+		if (lower.includes("burgundy") || lower.includes("maroon") || lower.includes("merah")) return "#6B1D2F";
+		if (lower.includes("black") || lower.includes("hitam")) return "#1A1A1A";
+		if (lower.includes("denim") || lower.includes("indigo")) return "#2A3B5C";
+		return "#7A828A";
+	}
+
+	// Data profil karakteristik Color Tone (Warm / Cool / Neutral)
+	const colortoneProfiles: Record<Undertone, {
+		title: string;
+		badge: string;
+		skinHex: string;
+		vein: string;
+		veinDesc: string;
+		jewelry: string;
+		clothingMood: string;
+		contrastAdvice: string;
+	}> = {
+		hangat: {
+			title: "Warm Earth & Golden Tone",
+			badge: "☀️ Warm Tone",
+			skinHex: "#D89F6B",
+			vein: "Kehijauan (Greenish Veins)",
+			veinDesc: "Pembuluh darah tampak kehijauan karena bias pigmen keemasan alami kulit.",
+			jewelry: "Emas Kuning (Gold) & Rose Gold",
+			clothingMood: "Nuansa bumi (earthy tones), broken white, cokelat espresso, camel, dan terracotta.",
+			contrastAdvice: "Kontras sedang bernuansa hangat alami. Hindari warna icy pucat atau neon tajam."
+		},
+		dingin: {
+			title: "Cool Slate & Jewel Tone",
+			badge: "❄️ Cool Tone",
+			skinHex: "#E2A794",
+			vein: "Kebiruan / Ungu (Blue/Purple Veins)",
+			veinDesc: "Pembuluh darah tampak jelas kebiruan di bawah kulit berspektrum sejuk alami.",
+			jewelry: "Perak (Silver) & Platinum",
+			clothingMood: "Kontras tegas, pure white, navy pekat, charcoal grey, dusty blue, dan burgundy.",
+			contrastAdvice: "Kontras tegas (high contrast) membuat wajah tampak cerah berseri dan bersih."
+		},
+		netral: {
+			title: "Neutral Mineral & Balanced Tone",
+			badge: "⚖️ Neutral Tone",
+			skinHex: "#DFAC88",
+			vein: "Campuran Hijau & Biru (Balanced Veins)",
+			veinDesc: "Keseimbangan harmonis tanpa dominasi spektrum hangat atau dingin ekstrem.",
+			jewelry: "Fleksibel: Emas maupun Perak",
+			clothingMood: "Keseimbangan lembut: ecru white, midnight graphite, sage green, taupe, dan dusty rose.",
+			contrastAdvice: "Kontras lembut seimbang (soft/medium contrast) memancarkan kesan anggun dan tenang."
+		}
+	};
 
 	// State AI Try-On Image Generation (Google Gemini)
 	let aiImages = $state<Record<string, string>>({});
@@ -627,10 +703,11 @@
 									<CheckIcon class="size-3.5 text-muted-foreground" />
 									<span>Warna Pakaian Terbaik untuk Kulitmu:</span>
 								</div>
-								<div class="flex flex-wrap gap-2">
+								<div class="flex flex-wrap gap-1.5 sm:gap-2">
 									{#each guide.photoAnalysis.recommendedOutfitColors as color}
-										<span class="inline-flex items-center rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 px-2.5 py-1 text-xs font-normal text-foreground">
-											{color}
+										<span class="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 px-2.5 py-1 text-xs font-medium text-foreground">
+											<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(color)}"></span>
+											<span>{color}</span>
 										</span>
 									{/each}
 								</div>
@@ -697,38 +774,83 @@
 
 				<!-- 2. TAB WARNA PERSONAL -->
 				<Tabs.Content value="warna" class="space-y-8">
-					{#if guide.photoAnalysis}
-						<div class="rounded-xl border border-border/80 bg-card p-6">
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-4">
-								<div class="flex items-center gap-3.5">
-									<div
-										class="size-11 rounded-full border border-black/10 shadow-sm shrink-0"
-										style="background-color: {guide.photoAnalysis.skinHex};"
-										title="Warna Kulit: {guide.photoAnalysis.skinHex}"
-									></div>
-									<div>
-										<div class="flex items-center gap-2">
-											<h3 class="font-serif text-base font-normal text-foreground">
-												Warna Kulit Terdeteksi ({guide.photoAnalysis.skinHex})
-											</h3>
-											<span class="rounded-full border border-border/80 px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
-												Analisis Foto
-											</span>
-										</div>
-										<p class="text-xs text-muted-foreground mt-0.5 font-normal">
-											Undertone: <strong class="text-foreground capitalize font-medium">{guide.photoAnalysis.undertone}</strong>.
-											{#if guide.photoAnalysis.veinDescription}
-												<span class="block text-[11px] text-muted-foreground/90 mt-0.5">• {guide.photoAnalysis.veinDescription}</span>
-											{/if}
-										</p>
+					<!-- Profil Komprehensif Color Tone Kulit -->
+					<div class="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">
+						<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-4">
+							<div class="flex items-center gap-3.5">
+								<div
+									class="size-12 sm:size-14 rounded-2xl border border-black/15 shadow-sm shrink-0 flex items-center justify-center relative overflow-hidden"
+									style="background-color: {guide.photoAnalysis?.skinHex || colortoneProfiles[activeUndertone]?.skinHex};"
+									title="Warna Kulit: {guide.photoAnalysis?.skinHex || colortoneProfiles[activeUndertone]?.skinHex}"
+								>
+									<span class="absolute bottom-1 right-1 rounded bg-black/60 backdrop-blur-xs px-1 text-[8px] font-mono text-white">
+										{guide.photoAnalysis?.skinHex || colortoneProfiles[activeUndertone]?.skinHex}
+									</span>
+								</div>
+								<div>
+									<div class="flex flex-wrap items-center gap-2">
+										<h3 class="font-serif text-base sm:text-lg font-bold text-foreground">
+											{colortoneProfiles[activeUndertone]?.title || `Analisis Color Tone ${activeUndertone}`}
+										</h3>
+										<span class="rounded-full border border-border/80 bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-foreground capitalize">
+											Undertone {guide.palette.undertone}
+										</span>
 									</div>
+									<p class="text-xs text-muted-foreground mt-0.5 font-normal">
+										Karakteristik tone kulit tergolong undertone <strong class="text-foreground capitalize font-semibold">{guide.palette.undertone}</strong> ({colortoneProfiles[activeUndertone]?.badge}).
+									</p>
 								</div>
 							</div>
-							<p class="mt-3 text-xs text-muted-foreground leading-relaxed font-normal">
-								{guide.photoAnalysis.explanation}
-							</p>
 						</div>
-					{/if}
+
+						<!-- 4 Dimensi Karakteristik Color Tone -->
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
+								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">🩸 Ciri Urat Nadi</span>
+								<p class="font-medium text-foreground">{colortoneProfiles[activeUndertone]?.vein}</p>
+								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">{colortoneProfiles[activeUndertone]?.veinDesc}</p>
+							</div>
+
+							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
+								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">💍 Perhiasan & Logam</span>
+								<p class="font-medium text-foreground">{colortoneProfiles[activeUndertone]?.jewelry}</p>
+								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">Menyatu alami tanpa terlihat menabrak kulit.</p>
+							</div>
+
+							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
+								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">🌓 Panduan Kontras</span>
+								<p class="font-medium text-foreground">Harmonisasi Siluet</p>
+								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">{colortoneProfiles[activeUndertone]?.contrastAdvice}</p>
+							</div>
+
+							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
+								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">✨ Arah Nuansa</span>
+								<p class="font-medium text-foreground">{guide.palette.name}</p>
+								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">{colortoneProfiles[activeUndertone]?.clothingMood}</p>
+							</div>
+						</div>
+
+						<p class="text-xs text-muted-foreground leading-relaxed font-normal pt-1">
+							{guide.photoAnalysis?.explanation || colortoneProfiles[activeUndertone]?.clothingMood}
+						</p>
+
+						{#if guide.photoAnalysis?.recommendedOutfitColors?.length}
+							<div class="pt-3 border-t border-border/60">
+								<div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
+									<CheckIcon class="size-3.5 text-emerald-600" />
+									<span>Warna Pakaian Paling Memikat untuk Tone Kulitmu:</span>
+								</div>
+								<div class="flex flex-wrap gap-1.5 sm:gap-2">
+									{#each guide.photoAnalysis.recommendedOutfitColors as color}
+										<span class="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 px-2.5 py-1 text-xs font-medium text-foreground">
+											<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(color)}"></span>
+											<span>{color}</span>
+										</span>
+									{/each}
+								</div>
+							</div>
+						{/if}
+					</div>
 
 					<div class="rounded-xl border border-border/80 bg-card p-6 sm:p-8">
 						<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/70 pb-6 mb-8">
@@ -889,7 +1011,7 @@
 
 					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{#each guide.capsule as item (item.id)}
-							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl">
+							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl shadow-2xs">
 								<div>
 									<div class="aspect-4/3 bg-stone-50 dark:bg-stone-900/40 p-3 flex items-center justify-center border-b border-border/70 relative overflow-hidden">
 										<img
@@ -901,18 +1023,26 @@
 										<span class="absolute top-3 left-3 rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
 											{item.category}
 										</span>
-										<span class="absolute top-3 right-3 text-[10px] font-mono text-muted-foreground bg-background/90 backdrop-blur-xs px-2.5 py-0.5 rounded border border-border/80">
+										<span class="absolute top-3 right-3 text-[10px] font-mono text-muted-foreground bg-background/90 backdrop-blur-xs px-2 py-0.5 rounded border border-border/80">
 											Versatilitas: {item.versatileScore}/10
 										</span>
 									</div>
 
 									<CardHeader class="p-4 sm:p-5 pb-2">
-										<CardTitle class="font-serif text-base font-normal text-foreground line-clamp-1">
-											{item.name}
-										</CardTitle>
+										<div class="flex items-start justify-between gap-2">
+											<CardTitle class="font-serif text-base sm:text-lg font-normal text-foreground line-clamp-1">
+												{item.name}
+											</CardTitle>
+											{#if item.priceEstimate}
+												<span class="font-mono text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-border/70 shrink-0">
+													{item.priceEstimate}
+												</span>
+											{/if}
+										</div>
 										<div class="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+											<span class="size-2.5 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.color)}"></span>
 											<span>Rekomendasi Warna:</span>
-											<span class="font-medium text-foreground">{item.color}</span>
+											<span class="font-semibold text-foreground">{item.color}</span>
 										</div>
 									</CardHeader>
 
@@ -938,12 +1068,12 @@
 											href={item.affiliateUrl}
 											target="_blank"
 											rel="noopener noreferrer nofollow"
-											class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 px-3 py-1.5 text-xs font-medium transition hover:opacity-90 active:scale-95 shrink-0"
+											class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
 											title="Beli {item.name} di Shopee"
 										>
 											<ShoppingBagIcon class="size-3" />
 											<span>Beli di Shopee</span>
-											<ExternalLinkIcon class="size-2.5 opacity-60" />
+											<ExternalLinkIcon class="size-2.5 opacity-80" />
 										</a>
 									{/if}
 								</div>
@@ -957,20 +1087,20 @@
 					<!-- Rekomendasi Palet Warna & Switcher Tone Kulit Langsung -->
 					<div class="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs space-y-4">
 						<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
-							<div class="flex items-center gap-2.5">
-								<div class="flex size-9 items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-foreground border border-border/60 shrink-0">
-									<PaletteIcon class="size-4.5" />
+							<div class="flex items-center gap-3 min-w-0">
+								<div class="flex size-10 sm:size-11 items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-foreground border border-border/60 shrink-0">
+									<PaletteIcon class="size-5 sm:size-5.5 text-stone-700 dark:text-stone-300" />
 								</div>
-								<div>
-									<div class="flex flex-wrap items-center gap-2">
-										<h3 class="font-serif text-base sm:text-lg font-bold text-foreground">
-											{guide.palette.name}
+								<div class="min-w-0 flex-1">
+									<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+										<h3 class="font-serif text-base sm:text-lg font-bold text-foreground truncate">
+											{colortoneProfiles[activeUndertone]?.title || guide.palette.name}
 										</h3>
-										<span class="rounded-full border border-border/80 bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-foreground capitalize">
+										<span class="rounded-full border border-border/80 bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-foreground capitalize shrink-0">
 											Undertone {guide.palette.undertone}
 										</span>
 									</div>
-									<p class="text-xs text-muted-foreground mt-0.5 font-normal">
+									<p class="text-xs text-muted-foreground mt-0.5 font-normal leading-relaxed">
 										{guide.palette.description}
 									</p>
 								</div>
@@ -981,42 +1111,54 @@
 								<button
 									type="button"
 									onclick={() => (activeUndertone = "hangat")}
-									class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-all {activeUndertone === 'hangat' ? 'bg-background text-foreground shadow-xs font-bold border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
+									class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all {activeUndertone === 'hangat' ? 'bg-background text-foreground shadow-xs font-bold border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
 									title="Urat nadi kehijauan / nuansa warm & earth"
 								>
-									<SunIcon class="size-3 text-amber-500" />
+									<SunIcon class="size-3.5 text-amber-500" />
 									<span>Warm Tone</span>
 								</button>
 								<button
 									type="button"
 									onclick={() => (activeUndertone = "dingin")}
-									class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-all {activeUndertone === 'dingin' ? 'bg-background text-foreground shadow-xs font-bold border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
+									class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all {activeUndertone === 'dingin' ? 'bg-background text-foreground shadow-xs font-bold border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
 									title="Urat nadi kebiruan / nuansa cool & slate"
 								>
-									<SnowflakeIcon class="size-3 text-sky-500" />
+									<SnowflakeIcon class="size-3.5 text-sky-500" />
 									<span>Cool Tone</span>
 								</button>
 								<button
 									type="button"
 									onclick={() => (activeUndertone = "netral")}
-									class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-all {activeUndertone === 'netral' ? 'bg-background text-foreground shadow-xs font-bold border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
+									class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all {activeUndertone === 'netral' ? 'bg-background text-foreground shadow-xs font-bold border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
 									title="Urat nadi campuran / neutral mineral"
 								>
-									<ScaleIcon class="size-3 text-emerald-500" />
+									<ScaleIcon class="size-3.5 text-emerald-500" />
 									<span>Neutral Tone</span>
 								</button>
+							</div>
+						</div>
+
+						<!-- Vein & Accessories Quick Hint -->
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground bg-stone-50/70 dark:bg-stone-900/40 rounded-xl p-3 border border-border/60">
+							<div class="flex items-center gap-2">
+								<span class="font-semibold text-foreground text-[11px] shrink-0">🩸 Karakter Nadi:</span>
+								<span class="truncate">{colortoneProfiles[activeUndertone]?.vein || guide.photoAnalysis?.veinDescription}</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="font-semibold text-foreground text-[11px] shrink-0">💍 Aksesori Ideal:</span>
+								<span class="truncate">{colortoneProfiles[activeUndertone]?.jewelry}</span>
 							</div>
 						</div>
 
 						<!-- Grid 6 Swatches (4 Base + 2 Accent) -->
 						<div class="space-y-2">
 							<div class="flex items-center justify-between text-xs">
-								<span class="font-semibold text-foreground uppercase tracking-wider text-[11px]">Warna Harmonisasi Pakaian</span>
+								<span class="font-semibold text-foreground uppercase tracking-wider text-[11px]">6 Warna Harmonisasi Kulit & Outfit</span>
 								<span class="text-muted-foreground text-[11px]">4 Netral Dasar + 2 Aksen Kunci</span>
 							</div>
 							<div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
 								{#each guide.palette.baseColors as col}
-									<div class="group relative flex flex-col items-center rounded-xl border border-border/70 bg-stone-50 dark:bg-stone-900/40 p-2 text-center transition-all hover:border-foreground/30 hover:bg-stone-100 dark:hover:bg-stone-800">
+									<div class="group relative flex flex-col items-center rounded-xl border border-border/70 bg-stone-50/80 dark:bg-stone-900/50 p-2 text-center transition-all hover:border-foreground/30 hover:bg-stone-100 dark:hover:bg-stone-800">
 										<span
 											class="size-7 sm:size-8 rounded-lg border border-black/15 dark:border-white/20 shadow-2xs shrink-0 transition-transform group-hover:scale-105"
 											style="background-color: {col.hex}"
@@ -1048,9 +1190,9 @@
 
 						<!-- Avoid Colors Warning Bar -->
 						{#if guide.palette.avoidColors?.length}
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 text-xs text-amber-950 dark:text-amber-200">
+							<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-2.5 text-xs text-amber-950 dark:text-amber-200">
 								<div class="flex items-center gap-2 flex-wrap">
-									<AlertTriangleIcon class="size-3.5 text-amber-600 shrink-0" />
+									<AlertTriangleIcon class="size-4 text-amber-600 shrink-0" />
 									<span class="font-semibold">Hindari warna yang menabrak kulit:</span>
 									<div class="flex items-center gap-1.5 flex-wrap">
 										{#each guide.palette.avoidColors as col}
@@ -1062,49 +1204,51 @@
 									</div>
 								</div>
 								<span class="text-[10px] text-muted-foreground self-end sm:self-auto italic">
-									Warna lookbook di bawah otomatis diselaraskan dengan tone {activeUndertone}.
+									Warna lookbook otomatis diselaraskan dengan tone {activeUndertone}.
 								</span>
 							</div>
 						{/if}
 					</div>
 
-					<div id="katalog-lookbook-heading" class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
+					<div id="katalog-lookbook-heading" class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-2">
 						<div>
 							<h2 class="font-serif text-2xl font-normal text-foreground">Katalog {guide.outfits.length} Kombinasi Look</h2>
 							<p class="text-xs sm:text-sm text-muted-foreground mt-0.5 font-normal">
-								Pilih filter situasi untuk menemukan inspirasi outfit harianmu secara instan.
+								Pilih filter situasi untuk menemukan inspirasi outfit harianmu lengkap dengan link belanja Shopee.
 							</p>
 						</div>
 					</div>
 
 					{#if guide.photoAnalysis}
-						<div class="flex items-center gap-3.5 rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-4 text-xs">
+						<div class="flex items-center gap-3.5 rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-3.5 sm:p-4 text-xs">
 							<div class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground">
-								<CameraIcon class="size-3.5" />
+								<CameraIcon class="size-4 text-primary" />
 							</div>
 							<div>
 								<div class="flex items-center gap-2">
-									<span class="font-medium text-foreground">Rekomendasi Berdasarkan Tone Kulitmu</span>
+									<span class="font-semibold text-foreground">Harmoni Color Tone Kulitmu</span>
 									<span class="rounded border border-border/70 px-1.5 py-0.2 text-[10px] font-mono text-muted-foreground">
 										{guide.photoAnalysis.skinHex}
 									</span>
 								</div>
 								<p class="text-muted-foreground mt-0.5 leading-relaxed font-normal">
-									Kombinasi look di bawah mengutamakan palet {guide.photoAnalysis.recommendedOutfitColors.slice(0, 3).join(", ")} yang serasi dengan karakter undertone kulitmu.
+									Kombinasi look di bawah mengutamakan palet {guide.photoAnalysis.recommendedOutfitColors.slice(0, 3).join(", ")} yang menyatu dengan undertone kulitmu.
 								</p>
 							</div>
 						</div>
 					{/if}
 
-					<!-- Filter Situasi -->
-					<div class="flex flex-wrap gap-2 pb-2 border-b border-border/70 no-print">
+					<!-- Filter Situasi dengan Scroll Horizontal di Mobile -->
+					<div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none flex-nowrap sm:flex-wrap border-b border-border/70 no-print">
 						{#each occasionFilters as f}
+							{@const count = f.id === "semua" ? guide.outfits.length : guide.outfits.filter(o => o.occasion === f.id).length}
 							<button
 								type="button"
 								onclick={() => (selectedOccasion = f.id)}
-								class="rounded-full px-3.5 py-1.5 text-xs transition-all {selectedOccasion === f.id ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-medium' : 'bg-stone-100/80 dark:bg-stone-800/60 text-muted-foreground hover:text-foreground font-normal'}"
+								class="rounded-full px-3 py-1.5 text-xs transition-all whitespace-nowrap shrink-0 {selectedOccasion === f.id ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-semibold' : 'bg-stone-100/80 dark:bg-stone-800/60 text-muted-foreground hover:text-foreground font-normal'}"
 							>
-								{f.label}
+								<span>{f.label}</span>
+								<span class="ml-1 text-[10px] opacity-75 font-mono font-medium">({count})</span>
 							</button>
 						{/each}
 					</div>
@@ -1119,7 +1263,7 @@
 						<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 							{#each paginatedOutfits as outfit, idx (outfit.id)}
 								{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
-								<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group">
+								<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group shadow-2xs">
 									<div>
 										{#if currentImage}
 											<div class="relative h-56 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
@@ -1175,6 +1319,30 @@
 											</button>
 										</div>
 
+										<!-- Color Tone Harmony Badge for this Look -->
+										<div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
+											<span class="inline-flex items-center gap-1 rounded-md bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 text-[10px] font-semibold text-foreground">
+												<SparklesIcon class="size-3 text-amber-500" />
+												<span>Harmoni Tone {colortoneProfiles[activeUndertone]?.badge || activeUndertone}</span>
+											</span>
+											<span class="text-[10px] text-muted-foreground font-mono">
+												{(outfit.items || []).length} Produk
+											</span>
+										</div>
+
+										<!-- Color Palette Swatches for this specific outfit -->
+										<div class="flex items-center gap-1.5 flex-wrap pt-1.5 pb-0.5">
+											<span class="text-[10px] font-medium text-muted-foreground">Palet:</span>
+											{#each (outfit.items || []) as it}
+												{#if it.color}
+													<span class="inline-flex items-center gap-1 rounded-full border border-border/80 bg-background/90 px-2 py-0.5 text-[10px] text-foreground font-normal" title="{it.name}: {it.color}">
+														<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(it.color)}"></span>
+														<span class="truncate max-w-[85px]">{it.color}</span>
+													</span>
+												{/if}
+											{/each}
+										</div>
+
 										<div class="rounded-lg bg-stone-50/70 dark:bg-stone-900/40 p-2.5 text-xs font-normal text-foreground mt-2 border border-border/50">
 											{outfit.formula}
 										</div>
@@ -1183,23 +1351,42 @@
 									<CardContent class="p-4 sm:p-5 pt-2 space-y-3">
 										<div>
 											<span class="text-[10px] font-semibold uppercase text-muted-foreground tracking-wider block mb-2">
-												Item Produk yang Dipakai:
+												Item Produk Rekomendasi & Link Shopee:
 											</span>
-											<ul class="space-y-1.5">
+											<ul class="space-y-2">
 												{#if outfit.items}
 													{#each outfit.items as it}
-														<li class="flex items-center justify-between gap-2.5 rounded-lg border border-border/70 bg-stone-50/40 dark:bg-stone-900/20 p-2 text-xs transition-colors hover:bg-stone-50 dark:hover:bg-stone-900/40">
-															<div class="flex items-center gap-2.5 min-w-0">
+														<li class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-2.5 text-xs transition-colors hover:bg-stone-100/60 dark:hover:bg-stone-800/50">
+															<div class="flex items-center gap-2.5 min-w-0 flex-1">
 																<!-- Thumbnail Foto Produk Pakaian -->
-																<div class="size-8 rounded-md border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center">
+																<div class="size-10 sm:size-11 rounded-lg border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 																	<img
 																		src={it.imageUrl || `/images/real/items/${it.id.startsWith("outer-1") ? "blazer" : it.id.startsWith("outer-2") ? "cardigan" : it.id.startsWith("top-1") ? "shirt" : it.id.startsWith("top-2") ? "blouse" : it.id.startsWith("top-3") ? "tshirt" : it.id.startsWith("top-4") ? "knitwear" : it.id.startsWith("bottom-1") ? "trousers" : it.id.startsWith("bottom-2") ? "denim" : it.id.startsWith("bottom-3") ? "chinos" : it.id.startsWith("shoes-1") ? "sneakers" : it.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
 																		alt={it.name}
-																		class="size-full object-cover"
+																		class="size-full object-cover transition-transform duration-300 hover:scale-105"
 																		loading="lazy"
 																	/>
 																</div>
-																<span class="font-medium text-foreground truncate text-xs">{it.name}</span>
+																<div class="min-w-0 flex-1">
+																	<div class="flex items-center gap-1.5 flex-wrap">
+																		<span class="font-medium text-foreground text-xs leading-snug">{it.name}</span>
+																		<span class="rounded bg-muted px-1.5 py-0.2 text-[9px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+																			{it.category}
+																		</span>
+																	</div>
+																	<!-- Rekomendasi Warna Colortone & Estimasi Harga -->
+																	<div class="flex items-center gap-2 mt-0.5 flex-wrap text-[11px]">
+																		<span class="inline-flex items-center gap-1 text-muted-foreground font-normal">
+																			<span class="size-2 rounded-full border border-black/20 shrink-0" style="background-color: {getColorHex(it.color)}"></span>
+																			<span>Warna: <strong class="font-medium text-foreground">{it.color || 'Netral'}</strong></span>
+																		</span>
+																		{#if it.priceEstimate}
+																			<span class="font-mono text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.2 rounded border border-border/60">
+																				{it.priceEstimate}
+																			</span>
+																		{/if}
+																	</div>
+																</div>
 															</div>
 
 															{#if it.affiliateUrl}
@@ -1207,11 +1394,12 @@
 																	href={it.affiliateUrl}
 																	target="_blank"
 																	rel="noopener noreferrer nofollow"
-																	class="inline-flex shrink-0 items-center gap-1 rounded-md border border-border/80 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 px-2.5 py-1 text-[10px] font-medium text-foreground transition active:scale-95"
+																	class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 self-end sm:self-center"
 																	title="Beli {it.name} di Shopee"
 																>
-																	<span>Beli</span>
-																	<ExternalLinkIcon class="size-2 opacity-60" />
+																	<ShoppingBagIcon class="size-3" />
+																	<span>Beli di Shopee</span>
+																	<ExternalLinkIcon class="size-2.5 opacity-80" />
 																</a>
 															{/if}
 														</li>
@@ -1233,9 +1421,10 @@
 											href={outfit.affiliateUrl}
 											target="_blank"
 											rel="noopener noreferrer nofollow"
-											class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 px-4 py-2.5 text-xs font-medium transition hover:opacity-90 active:scale-98"
+											class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 px-4 py-2.5 text-xs sm:text-sm font-semibold transition hover:opacity-90 active:scale-98 shadow-sm"
+											title="Beli 1 Set Look di Shopee"
 										>
-											<ShoppingBagIcon class="size-3.5" />
+											<ShoppingBagIcon class="size-3.5 text-orange-400 dark:text-orange-600" />
 											<span>Beli 1 Set Look di Shopee</span>
 											<ExternalLinkIcon class="size-3 opacity-60" />
 										</a>
@@ -1306,12 +1495,12 @@
 						<div class="mt-6 divide-y divide-border/60">
 							{#each guide.shopping as item (item.id)}
 								{@const isChecked = Boolean(shoppingChecks[item.id])}
-								<div class="flex items-start sm:items-center justify-between gap-4 py-4 transition-colors {isChecked ? 'opacity-50' : ''}">
-									<div class="flex items-start gap-3.5 flex-1">
+								<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 py-4 transition-colors {isChecked ? 'opacity-50' : ''}">
+									<div class="flex items-start gap-3 min-w-0 flex-1">
 										<button
 											type="button"
 											onclick={() => handleToggleCheck(item.id)}
-											class="flex size-5 shrink-0 items-center justify-center rounded border transition-all mt-0.5 sm:mt-0 {isChecked ? 'border-foreground bg-foreground text-background' : 'border-border/80 bg-background hover:border-foreground/50'}"
+											class="flex size-5 shrink-0 items-center justify-center rounded border transition-all mt-1 sm:mt-0.5 {isChecked ? 'border-foreground bg-foreground text-background' : 'border-border/80 bg-background hover:border-foreground/50'}"
 											aria-label="Centang kepemilikan item"
 										>
 											{#if isChecked}
@@ -1320,28 +1509,29 @@
 										</button>
 
 										<!-- Foto Thumbnail Item Belanja -->
-										<div class="size-11 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center">
+										<div class="size-11 sm:size-12 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
 											<img
 												src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
 												alt={item.name}
-												class="size-full object-cover"
+												class="size-full object-cover transition-transform duration-300 hover:scale-105"
 												loading="lazy"
 											/>
 										</div>
 
 										<div class="flex-1 min-w-0">
-											<div class="flex flex-wrap items-center gap-2">
-												<span class="font-serif text-sm font-medium {isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}">
+											<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+												<span class="font-serif text-sm sm:text-base font-medium {isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}">
 													{item.name}
 												</span>
-												<span class="rounded border border-border/80 px-1.5 py-0.2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+												<span class="rounded border border-border/80 px-1.5 py-0.2 text-[9px] sm:text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
 													Prioritas {item.priority}
 												</span>
-												<span class="text-xs text-muted-foreground">
-													· Warna: <strong class="font-medium text-foreground">{item.colorSuggestion}</strong>
+												<span class="inline-flex items-center gap-1 text-xs text-muted-foreground font-normal">
+													<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.colorSuggestion)}"></span>
+													<span>Warna: <strong class="font-semibold text-foreground">{item.colorSuggestion}</strong></span>
 												</span>
 												{#if item.priceEstimate}
-													<span class="text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-border/70">
+													<span class="text-[10px] sm:text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-border/70">
 														{item.priceEstimate}
 													</span>
 												{/if}
@@ -1353,8 +1543,9 @@
 										</div>
 									</div>
 
-									<div class="text-right shrink-0 flex flex-col items-end gap-1.5">
-										<span class="text-xs font-mono text-muted-foreground">
+									<!-- Action: Look Count & Beli Button -->
+									<div class="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 pl-8 sm:pl-0 pt-1 sm:pt-0">
+										<span class="text-xs font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded border border-border/60">
 											{item.outfitCount} Look
 										</span>
 
@@ -1363,11 +1554,12 @@
 												href={item.affiliateUrl}
 												target="_blank"
 												rel="noopener noreferrer nofollow"
-												class="inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 px-2.5 py-1 text-[11px] font-medium text-foreground transition active:scale-95"
+												class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95"
+												title="Beli {item.name} di Shopee"
 											>
-												<ShoppingBagIcon class="size-3 text-muted-foreground" />
-												<span>Beli</span>
-												<ExternalLinkIcon class="size-2 opacity-60" />
+												<ShoppingBagIcon class="size-3" />
+												<span>Beli di Shopee</span>
+												<ExternalLinkIcon class="size-2.5 opacity-80" />
 											</a>
 										{/if}
 									</div>

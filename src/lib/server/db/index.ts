@@ -77,6 +77,7 @@ sqlite.exec(`
 		name TEXT NOT NULL,
 		category TEXT NOT NULL,
 		affiliate_url TEXT,
+		image_url TEXT,
 		price_estimate TEXT,
 		updated_at INTEGER NOT NULL
 	);
@@ -101,6 +102,12 @@ sqlite.exec(`
 	CREATE INDEX IF NOT EXISTS idx_admin_outfits_occasion ON admin_outfits(occasion);
 	CREATE INDEX IF NOT EXISTS idx_ai_images_sub_outfit ON ai_generated_images(submission_id, outfit_id);
 `);
+
+try {
+	sqlite.prepare("ALTER TABLE affiliate_items ADD COLUMN image_url TEXT").run();
+} catch (_) {
+	// Column already exists
+}
 
 // Job pembersihan draft yang tidak aktif lebih dari 90 hari
 export function cleanupOldDrafts() {

@@ -12,6 +12,7 @@ import {
 } from "./schema";
 import { nanoid } from "nanoid";
 import { rawOutfitTemplates } from "../../engine/outfits";
+import type { StyleGuideResult, CapsuleItem, Gender } from "$lib/types/style";
 
 export async function getOrCreateSession(existingSessionId?: string): Promise<string> {
 	if (existingSessionId) {
@@ -182,41 +183,96 @@ export async function getSubmissionResult(submissionId: string) {
 	// Sinkronkan dengan data afiliasi Shopee per produk terbaru dari database admin
 	const affiliateMap = await getAffiliateMap();
 
-	const enrichedOutfits = (outfits || []).map((o: any) => ({
-		...o,
-		affiliateUrl: affiliateMap.outfits[o.id] || o.affiliateUrl || null,
-		imageUrl: affiliateMap.outfitImages[o.id] || o.imageUrl || `/images/real/looks/${o.id}.jpg`,
-		items: (o.items || []).map((it: any) => ({
-			...it,
-			affiliateUrl: affiliateMap.items[it.id] || null,
-			priceEstimate: affiliateMap.itemPrices[it.id] || null,
-			imageUrl: affiliateMap.itemImages[it.id] || it.imageUrl || null
-		}))
-	}));
+	const baseGuide: StyleGuideResult = {
+		summary: {
+			headline: "",
+			subheadline: "",
+			itemCount: (capsule || []).length,
+			outfitCount: (outfits || []).length,
+			primaryStyle: "",
+			genderDesc: "",
+			coreRatio: ""
+		},
+		palette: typeof r.palette === "string" ? JSON.parse(r.palette) : r.palette,
+		capsule: capsule || [],
+		outfits: outfits || [],
+		shopping: shopping || []
+	};
 
-	const enrichedShopping = (shopping || []).map((s: any) => ({
-		...s,
-		affiliateUrl: affiliateMap.items[s.id] || s.affiliateUrl || null,
-		priceEstimate: affiliateMap.itemPrices[s.id] || s.priceEstimate || null,
-		imageUrl: affiliateMap.itemImages[s.id] || s.imageUrl || null
-	}));
-
-	const enrichedCapsule = (capsule || []).map((c: any) => ({
-		...c,
-		affiliateUrl: affiliateMap.items[c.id] || null,
-		priceEstimate: affiliateMap.itemPrices[c.id] || null,
-		imageUrl: affiliateMap.itemImages[c.id] || c.imageUrl || null
-	}));
+	const enriched = enrichStyleGuide(baseGuide, affiliateMap);
 
 	return {
 		submissionId: r.submissionId,
 		schemaVersion: r.schemaVersion,
-		palette: typeof r.palette === "string" ? JSON.parse(r.palette) : r.palette,
-		capsule: enrichedCapsule,
-		outfits: enrichedOutfits,
-		shopping: enrichedShopping,
+		palette: enriched.palette,
+		capsule: enriched.capsule,
+		outfits: enriched.outfits,
+		shopping: enriched.shopping,
 		createdAt: r.createdAt,
 		affiliateSettings: affiliateMap.settings
+	};
+}
+
+export function enrichStyleGuide(
+	guide: StyleGuideResult,
+	affiliateMap: {
+		outfits: Record<string, string>;
+		outfitImages: Record<string, string>;
+		items: Record<string, string>;
+		itemPrices: Record<string, string>;
+		itemImages: Record<string, string>;
+		settings?: Record<string, string>;
+	},
+	gender: string = "pria"
+): StyleGuideResult {
+	const defaultShopeeQuery = (name: string, extra = "") =>
+		`https://shopee.co.id/search?keyword=${encodeURIComponent(`${name} ${extra} ${gender === "wanita" ? "wanita" : "pria"}`.trim())}`;
+
+	const enrichedCapsule = (guide.capsule || []).map((c: any) => ({
+		...c,
+		affiliateUrl: affiliateMap.items[c.id] || c.affiliateUrl || defaultShopeeQuery(c.name, c.color),
+		priceEstimate: affiliateMap.itemPrices[c.id] || c.priceEstimate || "Rp 99.000 - Rp 250.000",
+		imageUrl: affiliateMap.itemImages[c.id] || c.imageUrl || null
+	}));
+
+	const capsuleMap = new Map<string, CapsuleItem>(enrichedCapsule.map((item: CapsuleItem) => [item.id, item]));
+
+	const enrichedOutfits = (guide.outfits || []).map((o: any) => ({
+		...o,
+		affiliateUrl:
+			affiliateMap.outfits[o.id] ||
+			o.affiliateUrl ||
+			defaultShopeeQuery(o.name, (o.formula || "").replace(/\+/g, " ")),
+		imageUrl: affiliateMap.outfitImages[o.id] || o.imageUrl || `/images/real/looks/${o.id}.jpg`,
+		items:
+			o.items && o.items.length > 0
+				? o.items.map((it: any) => {
+						const enriched = capsuleMap.get(it.id);
+						return {
+							...it,
+							color: it.color || enriched?.color || "",
+							affiliateUrl: affiliateMap.items[it.id] || it.affiliateUrl || enriched?.affiliateUrl || defaultShopeeQuery(it.name),
+							priceEstimate: affiliateMap.itemPrices[it.id] || it.priceEstimate || enriched?.priceEstimate || null,
+							imageUrl: affiliateMap.itemImages[it.id] || it.imageUrl || enriched?.imageUrl || null
+						};
+				  })
+				: (o.itemIds || [])
+						.map((id: string) => capsuleMap.get(id))
+						.filter((item: CapsuleItem | undefined): item is CapsuleItem => Boolean(item))
+	}));
+
+	const enrichedShopping = (guide.shopping || []).map((s: any) => ({
+		...s,
+		affiliateUrl: affiliateMap.items[s.id] || s.affiliateUrl || defaultShopeeQuery(s.name, s.colorSuggestion),
+		priceEstimate: affiliateMap.itemPrices[s.id] || s.priceEstimate || "Rp 99.000 - Rp 250.000",
+		imageUrl: affiliateMap.itemImages[s.id] || s.imageUrl || null
+	}));
+
+	return {
+		...guide,
+		capsule: enrichedCapsule,
+		outfits: enrichedOutfits,
+		shopping: enrichedShopping
 	};
 }
 

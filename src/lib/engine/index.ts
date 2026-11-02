@@ -37,48 +37,52 @@ export function generateStyleGuide(
 	const headline = `Panduan Capsule Wardrobe ${primaryStyleName}`;
 	const subheadline = `Koleksi esensial dirancang khusus untuk proporsi tubuhmu, undertone kulit ${answers.undertone}, dan rutinitas aktif harian.`;
 
-	let photoAnalysis = undefined;
-	if (answers.photoSkinHex) {
-		const recColors =
+	const recColors =
+		answers.undertone === "hangat"
+			? ["Broken White", "Cokelat Espresso", "Camel / Oat", "Terracotta", "Deep Olive"]
+			: answers.undertone === "dingin"
+				? ["Pure White", "Deep Navy", "Charcoal Grey", "Dusty Blue", "Burgundy"]
+				: ["Ecru White", "Midnight Graphite", "Smokey Taupe", "Sage Green", "Dusty Rosewood"];
+	const avoidColors =
+		answers.undertone === "hangat"
+			? ["Icy Blue Neon", "Magenta Tajam"]
+			: answers.undertone === "dingin"
+				? ["Kuning Mustard", "Jingga Oranye Terik"]
+				: ["Kuning Stabilo Neon", "Fluorescent Orange"];
+
+	const veinType =
+		answers.photoVeinType ||
+		(answers.undertone === "hangat" ? "hijau" : answers.undertone === "dingin" ? "biru" : "campuran");
+
+	const veinDesc =
+		veinType === "hijau"
+			? "Urat nadi pergelangan tangan terdeteksi dominan kehijauan (Warm Color Tone)."
+			: veinType === "biru"
+				? "Urat nadi pergelangan tangan terdeteksi dominan kebiruan/ungu (Cool Color Tone)."
+				: "Urat nadi pergelangan tangan terdeteksi perpaduan seimbang hijau & biru (Neutral Color Tone).";
+
+	const defaultSkinHex =
+		answers.undertone === "hangat"
+			? "#D89F6B"
+			: answers.undertone === "dingin"
+				? "#E2A794"
+				: "#DFAC88";
+
+	const photoAnalysis = {
+		skinHex: answers.photoSkinHex || defaultSkinHex,
+		undertone: answers.undertone,
+		confidence: answers.photoConfidence || 92,
+		recommendedOutfitColors: recColors,
+		avoidColors,
+		veinColorType: veinType,
+		veinDescription: veinDesc,
+		explanation:
 			answers.undertone === "hangat"
-				? ["Broken White", "Cokelat Espresso", "Camel / Oat", "Terracotta", "Deep Olive"]
+				? "Berdasarkan analisis warna kulit & urat nadi pergelangan tangan yang kehijauan, kamu memiliki Warm Color Tone. Pigmen kulit keemasan/peachy sangat memikat saat dipadukan dengan palet bernuansa bumi (earthy tones), broken white, camel, dan terracotta."
 				: answers.undertone === "dingin"
-					? ["Pure White", "Deep Navy", "Charcoal Grey", "Dusty Blue", "Burgundy"]
-					: ["Ecru White", "Midnight Graphite", "Smokey Taupe", "Sage Green", "Dusty Rosewood"];
-		const avoidColors =
-			answers.undertone === "hangat"
-				? ["Icy Blue Neon", "Magenta Tajam"]
-				: answers.undertone === "dingin"
-					? ["Kuning Mustard", "Jingga Oranye Terik"]
-					: ["Kuning Stabilo Neon", "Fluorescent Orange"];
-
-		const veinType =
-			answers.photoVeinType ||
-			(answers.undertone === "hangat" ? "hijau" : answers.undertone === "dingin" ? "biru" : "campuran");
-
-		const veinDesc =
-			veinType === "hijau"
-				? "Urat nadi pergelangan tangan terdeteksi dominan kehijauan (Warm Color Tone)."
-				: veinType === "biru"
-					? "Urat nadi pergelangan tangan terdeteksi dominan kebiruan/ungu (Cool Color Tone)."
-					: "Urat nadi pergelangan tangan terdeteksi perpaduan seimbang hijau & biru (Neutral Color Tone).";
-
-		photoAnalysis = {
-			skinHex: answers.photoSkinHex,
-			undertone: answers.undertone,
-			confidence: answers.photoConfidence || 92,
-			recommendedOutfitColors: recColors,
-			avoidColors,
-			veinColorType: veinType,
-			veinDescription: veinDesc,
-			explanation:
-				answers.undertone === "hangat"
-					? "Berdasarkan analisis warna kulit & urat nadi pergelangan tangan yang kehijauan, kamu memiliki Warm Color Tone. Pigmen kulit keemasan/peachy sangat memikat saat dipadukan dengan palet bernuansa bumi (earthy tones), broken white, camel, dan terracotta."
-					: answers.undertone === "dingin"
-						? "Berdasarkan analisis warna kulit & urat nadi pergelangan tangan yang kebiruan/ungu, kamu memiliki Cool Color Tone. Spektrum sejuk alami membuat kulitmu tampak cerah dan jernih dengan warna kontras tegas seperti deep navy, abu arang, pure white, dan burgundy."
-						: "Berdasarkan analisis warna kulit & urat nadi pergelangan tangan campuran hijau-biru, kamu memiliki Neutral Color Tone. Kulitmu memiliki keseimbangan sejuk-hangat yang harmonis dan fleksibel memadukan spektrum warna navy, krem taupe, maupun sage green."
-		};
-	}
+					? "Berdasarkan analisis warna kulit & urat nadi pergelangan tangan yang kebiruan/ungu, kamu memiliki Cool Color Tone. Spektrum sejuk alami membuat kulitmu tampak cerah dan jernih dengan warna kontras tegas seperti deep navy, abu arang, pure white, dan burgundy."
+					: "Berdasarkan analisis warna kulit & urat nadi pergelangan tangan campuran hijau-biru, kamu memiliki Neutral Color Tone. Kulitmu memiliki keseimbangan sejuk-hangat yang harmonis dan fleksibel memadukan spektrum warna navy, krem taupe, maupun sage green."
+	};
 
 	return {
 		summary: {
