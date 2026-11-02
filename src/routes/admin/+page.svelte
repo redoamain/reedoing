@@ -439,7 +439,7 @@
 </svelte:head>
 
 {#snippet sidebarNav()}
-	<SidebarUI.SidebarHeader class="p-4">
+	<SidebarUI.SidebarHeader class="p-4 shrink-0">
 		<div class="flex items-center gap-3">
 			{#if data.settings.site_logo}
 				<img src={data.settings.site_logo} alt={data.settings.site_name || "Logo"} class="size-9 rounded-lg object-contain border border-border bg-stone-50 dark:bg-stone-900" />
@@ -568,7 +568,7 @@
 		</div>
 	</SidebarUI.SidebarContent>
 
-	<SidebarUI.SidebarFooter class="p-3">
+	<SidebarUI.SidebarFooter class="p-3 shrink-0">
 		<!-- User Profile Card -->
 		<div class="flex items-center justify-between rounded-lg border border-border/70 bg-stone-50/80 dark:bg-stone-900/50 p-2.5">
 			<div class="flex items-center gap-2 min-w-0">
@@ -619,9 +619,9 @@
 	</SidebarUI.SidebarFooter>
 {/snippet}
 
-<div class="min-h-screen bg-muted/20 flex flex-col lg:flex-row">
+<div class="h-screen h-[100dvh] bg-muted/20 flex flex-col lg:flex-row overflow-hidden">
 	<!-- DESKTOP SHADCN SIDEBAR -->
-	<SidebarUI.Sidebar class="hidden lg:flex sticky top-0 h-screen">
+	<SidebarUI.Sidebar class="hidden lg:flex h-full shrink-0 border-r border-border select-none">
 		{@render sidebarNav()}
 	</SidebarUI.Sidebar>
 
@@ -634,9 +634,9 @@
 		</Sheet.Content>
 	</Sheet.Root>
 
-	<div class="flex-1 flex flex-col min-w-0">
+	<div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
 		<!-- TOP NAVBAR -->
-		<header class="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 px-3 sm:px-6 backdrop-blur">
+		<header class="shrink-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 px-3 sm:px-6 backdrop-blur">
 			<div class="flex items-center gap-2 sm:gap-3 min-w-0">
 				<SidebarUI.SidebarTrigger onclick={() => (mobileSidebarOpen = true)} class="lg:hidden shrink-0" />
 				
@@ -692,9 +692,7 @@
 		</header>
 
 		<!-- MAIN CONTENT AREA -->
-
-	<!-- MAIN CONTENT AREA -->
-	<main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
+		<main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
 		<!-- Summary Cards -->
 		<div class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
 			<Card class="border-border/80 bg-card rounded-xl">

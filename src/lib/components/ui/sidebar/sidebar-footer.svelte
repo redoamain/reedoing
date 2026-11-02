@@ -13,7 +13,7 @@
 <div
 	bind:this={ref}
 	data-slot="sidebar-footer"
-	class={cn("flex flex-col gap-2 p-3 border-t border-border/70 bg-card/60", className)}
+	class={cn("flex flex-col gap-2 p-3 border-t border-border/70 bg-card/60 shrink-0", className)}
 	{...restProps}
 >
 	{@render children?.()}
