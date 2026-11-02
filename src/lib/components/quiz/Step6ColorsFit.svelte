@@ -9,6 +9,7 @@
 		photoConfidence?: number;
 		photoVeinType?: "hijau" | "biru" | "campuran";
 		photoBase64?: string;
+		onAnalyzed?: () => void;
 	}
 
 	let {
@@ -17,7 +18,8 @@
 		photoSkinHex = $bindable(undefined),
 		photoConfidence = $bindable(undefined),
 		photoVeinType = $bindable(undefined),
-		photoBase64 = $bindable(undefined)
+		photoBase64 = $bindable(undefined),
+		onAnalyzed
 	}: Props = $props();
 
 	const proportionOptions: Array<{
@@ -67,6 +69,7 @@
 		bind:photoConfidence
 		bind:photoVeinType
 		bind:photoBase64
+		{onAnalyzed}
 	/>
 
 	<!-- 2. Proporsi Siluet Tubuh -->

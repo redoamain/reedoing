@@ -21,6 +21,8 @@
 	import HandIcon from "@lucide/svelte/icons/hand";
 	import LightbulbIcon from "@lucide/svelte/icons/lightbulb";
 	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
+	import SwitchCameraIcon from "@lucide/svelte/icons/switch-camera";
+	import XIcon from "@lucide/svelte/icons/x";
 	import { Button } from "$lib/components/ui/button";
 
 	interface Props {
@@ -29,6 +31,7 @@
 		photoConfidence?: number;
 		photoVeinType?: VeinColorType;
 		photoBase64?: string;
+		onAnalyzed?: () => void;
 	}
 
 	let {
@@ -36,11 +39,11 @@
 		photoSkinHex = $bindable(undefined),
 		photoConfidence = $bindable(undefined),
 		photoVeinType = $bindable(undefined),
-		photoBase64 = $bindable(undefined)
+		photoBase64 = $bindable(undefined),
+		onAnalyzed
 	}: Props = $props();
 
 	let fileInputGallery: HTMLInputElement | undefined = $state();
-	let fileInputCamera: HTMLInputElement | undefined = $state();
 
 	let previewUrl = $state<string | null>(null);
 	let isAnalyzing = $state(false);
@@ -48,6 +51,29 @@
 	let isDragging = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let showVeinGuide = $state(true);
+
+	// In-browser WebRTC Live Camera (Mencegah Android mematikan tab browser)
+	let isLiveCameraOpen = $state(false);
+	let isCameraLoading = $state(false);
+	let facingMode = $state<"environment" | "user">("environment");
+	let videoElement = $state<HTMLVideoElement | undefined>();
+	let videoStream: MediaStream | null = null;
+
+	$effect(() => {
+		if (videoElement && videoStream && videoElement.srcObject !== videoStream) {
+			videoElement.srcObject = videoStream;
+			videoElement.play().catch(() => {});
+		}
+	});
+
+	$effect(() => {
+		return () => {
+			stopLiveCamera();
+			if (previewUrl && previewUrl.startsWith("blob:")) {
+				URL.revokeObjectURL(previewUrl);
+			}
+		};
+	});
 
 	$effect(() => {
 		if (!analysisResult && (photoSkinHex || photoVeinType)) {
@@ -62,6 +88,147 @@
 		}
 	});
 
+	async function openLiveCamera(mode?: "environment" | "user") {
+		if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+			errorMessage = "Kamera langsung tidak didukung di browser ini. Silakan pilih foto dari galeri.";
+			fileInputGallery?.click();
+			return;
+		}
+
+		errorMessage = null;
+		isCameraLoading = true;
+		isLiveCameraOpen = true;
+		const targetMode = mode || facingMode;
+		facingMode = targetMode;
+
+		// Hentikan stream lama bila ada
+		if (videoStream) {
+			videoStream.getTracks().forEach((track) => track.stop());
+			videoStream = null;
+		}
+
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				video: {
+					facingMode: { ideal: targetMode },
+					width: { ideal: 1280 },
+					height: { ideal: 720 }
+				},
+				audio: false
+			});
+
+			videoStream = stream;
+			isCameraLoading = false;
+
+			if (videoElement) {
+				videoElement.srcObject = stream;
+				await videoElement.play().catch(() => {});
+			}
+		} catch (err: any) {
+			console.warn("Camera access failed:", err);
+			stopLiveCamera();
+			if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+				errorMessage = "Izin kamera ditolak. Silakan berikan izin akses kamera di pengaturan browser atau pilih foto dari galeri.";
+			} else {
+				errorMessage = "Tidak dapat mengakses kamera langsung. Silakan pilih foto dari galeri.";
+			}
+			fileInputGallery?.click();
+		}
+	}
+
+	async function toggleFacingMode() {
+		const nextMode = facingMode === "environment" ? "user" : "environment";
+		await openLiveCamera(nextMode);
+	}
+
+	function stopLiveCamera() {
+		if (videoStream) {
+			videoStream.getTracks().forEach((track) => track.stop());
+			videoStream = null;
+		}
+		if (videoElement) {
+			videoElement.srcObject = null;
+		}
+		isLiveCameraOpen = false;
+		isCameraLoading = false;
+	}
+
+	function captureLiveSnapshot() {
+		if (!videoElement) return;
+
+		try {
+			isAnalyzing = true;
+			const canvas = document.createElement("canvas");
+			const vw = videoElement.videoWidth || 640;
+			const vh = videoElement.videoHeight || 480;
+
+			// Batasi dimensi pemrosesan agar sangat hemat memori dan cepat (<500px)
+			const maxDim = 480;
+			let w = vw;
+			let h = vh;
+			if (w > maxDim || h > maxDim) {
+				if (w > h) {
+					h = Math.round((h * maxDim) / w);
+					w = maxDim;
+				} else {
+					w = Math.round((w * maxDim) / h);
+					h = maxDim;
+				}
+			}
+
+			canvas.width = Math.max(1, w);
+			canvas.height = Math.max(1, h);
+			const ctx = canvas.getContext("2d");
+			if (!ctx) {
+				throw new Error("Gagal menginisialisasi canvas.");
+			}
+
+			ctx.drawImage(videoElement, 0, 0, w, h);
+			stopLiveCamera();
+
+			// Analisis pigmen kulit dan warna urat nadi dari frame kamera
+			const imageData = ctx.getImageData(0, 0, w, h);
+			const result = analyzeSkinFromImageData(imageData);
+
+			// Buat thumbnail ringan berukuran kecil (~180px, ~10KB) untuk preview & visualisasi panduan
+			const thumbCanvas = document.createElement("canvas");
+			const thumbMax = 180;
+			let tw = w;
+			let th = h;
+			if (tw > thumbMax || th > thumbMax) {
+				if (tw > th) {
+					th = Math.round((th * thumbMax) / tw);
+					tw = thumbMax;
+				} else {
+					tw = Math.round((tw * thumbMax) / th);
+					th = thumbMax;
+				}
+			}
+			thumbCanvas.width = tw;
+			thumbCanvas.height = th;
+			const thumbCtx = thumbCanvas.getContext("2d");
+			let smallThumb = "";
+			if (thumbCtx) {
+				thumbCtx.drawImage(canvas, 0, 0, tw, th);
+				smallThumb = thumbCanvas.toDataURL("image/jpeg", 0.7);
+			}
+
+			previewUrl = smallThumb || canvas.toDataURL("image/jpeg", 0.75);
+			photoBase64 = previewUrl;
+			analysisResult = result;
+			photoSkinHex = result.dominantHex;
+			photoConfidence = result.confidence;
+			photoVeinType = result.veinColorType;
+			undertone = result.undertone;
+			isAnalyzing = false;
+			onAnalyzed?.();
+		} catch (err: any) {
+			stopLiveCamera();
+			isAnalyzing = false;
+			errorMessage = err?.message || "Gagal mengambil foto. Silakan coba lagi.";
+		}
+	}
+
 	function processImageFile(file: File) {
 		if (!file.type.startsWith("image/")) {
 			errorMessage = "Harap unggah file gambar yang valid (JPG, PNG, atau WEBP).";
@@ -71,70 +238,96 @@
 		errorMessage = null;
 		isAnalyzing = true;
 
-		// Buat preview URL
-		if (previewUrl) {
+		// Bersihkan preview URL sebelumnya jika blob
+		if (previewUrl && previewUrl.startsWith("blob:")) {
 			URL.revokeObjectURL(previewUrl);
 		}
-		const objectUrl = URL.createObjectURL(file);
-		previewUrl = objectUrl;
 
-		const img = new Image();
-		img.onload = () => {
-			try {
-				const canvas = document.createElement("canvas");
-				const maxDim = 360;
-				let w = img.naturalWidth || img.width;
-				let h = img.naturalHeight || img.height;
-
-				if (w > maxDim || h > maxDim) {
-					if (w > h) {
-						h = Math.round((h * maxDim) / w);
-						w = maxDim;
-					} else {
-						w = Math.round((w * maxDim) / h);
-						h = maxDim;
-					}
-				}
-
-				canvas.width = Math.max(1, w);
-				canvas.height = Math.max(1, h);
-				const ctx = canvas.getContext("2d");
-
-				if (!ctx) {
-					throw new Error("Gagal menginisialisasi canvas pemrosesan.");
-				}
-
-				ctx.drawImage(img, 0, 0, w, h);
-				const imageData = ctx.getImageData(0, 0, w, h);
-				const result = analyzeSkinFromImageData(imageData);
-
-				analysisResult = result;
-				photoSkinHex = result.dominantHex;
-				photoConfidence = result.confidence;
-				photoVeinType = result.veinColorType;
-
-				// Simpan preview base64 untuk visualisasi AI
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const dataUrl = e.target?.result as string;
+			const img = new Image();
+			img.onload = () => {
 				try {
-					photoBase64 = canvas.toDataURL("image/jpeg", 0.7);
-				} catch (e) {
-					// Abaikan jika toDataURL terblokir
-				}
+					const canvas = document.createElement("canvas");
+					const maxDim = 480;
+					let w = img.naturalWidth || img.width;
+					let h = img.naturalHeight || img.height;
 
-				// Terapkan undertone hasil deteksi otomatis
-				undertone = result.undertone;
+					if (w > maxDim || h > maxDim) {
+						if (w > h) {
+							h = Math.round((h * maxDim) / w);
+							w = maxDim;
+						} else {
+							w = Math.round((w * maxDim) / h);
+							h = maxDim;
+						}
+					}
+
+					canvas.width = Math.max(1, w);
+					canvas.height = Math.max(1, h);
+					const ctx = canvas.getContext("2d");
+
+					if (!ctx) {
+						throw new Error("Gagal menginisialisasi canvas pemrosesan.");
+					}
+
+					ctx.drawImage(img, 0, 0, w, h);
+					const imageData = ctx.getImageData(0, 0, w, h);
+					const result = analyzeSkinFromImageData(imageData);
+
+					// Thumbnail hemat memori (~180px)
+					const thumbCanvas = document.createElement("canvas");
+					const thumbMax = 180;
+					let tw = w;
+					let th = h;
+					if (tw > thumbMax || th > thumbMax) {
+						if (tw > th) {
+							th = Math.round((th * thumbMax) / tw);
+							tw = thumbMax;
+						} else {
+							tw = Math.round((tw * thumbMax) / th);
+							th = thumbMax;
+						}
+					}
+					thumbCanvas.width = tw;
+					thumbCanvas.height = th;
+					const thumbCtx = thumbCanvas.getContext("2d");
+					let smallThumb = "";
+					if (thumbCtx) {
+						thumbCtx.drawImage(canvas, 0, 0, tw, th);
+						smallThumb = thumbCanvas.toDataURL("image/jpeg", 0.7);
+					}
+
+					previewUrl = smallThumb || canvas.toDataURL("image/jpeg", 0.75);
+					photoBase64 = previewUrl;
+					analysisResult = result;
+					photoSkinHex = result.dominantHex;
+					photoConfidence = result.confidence;
+					photoVeinType = result.veinColorType;
+					undertone = result.undertone;
+					isAnalyzing = false;
+					onAnalyzed?.();
+				} catch (err: any) {
+					errorMessage = err?.message || "Gagal memproses gambar. Silakan coba unggah foto lain.";
+					isAnalyzing = false;
+				}
+			};
+
+			img.onerror = () => {
+				errorMessage = "Gagal memuat gambar. Pastikan file gambar tidak rusak.";
 				isAnalyzing = false;
-			} catch (err: any) {
-				errorMessage = err?.message || "Gagal memproses gambar. Silakan coba unggah foto lain.";
-				isAnalyzing = false;
-			}
+			};
+
+			img.src = dataUrl;
 		};
 
-		img.onerror = () => {
-			errorMessage = "Gagal memuat gambar. Pastikan file gambar tidak rusak.";
+		reader.onerror = () => {
+			errorMessage = "Gagal membaca file gambar.";
 			isAnalyzing = false;
 		};
 
-		img.src = objectUrl;
+		reader.readAsDataURL(file);
 	}
 
 	function handleFileChange(event: Event) {
@@ -164,10 +357,11 @@
 	}
 
 	function handleReset() {
-		if (previewUrl) {
+		stopLiveCamera();
+		if (previewUrl && previewUrl.startsWith("blob:")) {
 			URL.revokeObjectURL(previewUrl);
-			previewUrl = null;
 		}
+		previewUrl = null;
 		analysisResult = null;
 		photoSkinHex = undefined;
 		photoConfidence = undefined;
@@ -175,9 +369,8 @@
 		photoBase64 = undefined;
 		errorMessage = null;
 		if (fileInputGallery) fileInputGallery.value = "";
-		if (fileInputCamera) fileInputCamera.value = "";
+		onAnalyzed?.();
 	}
-
 
 	function handleVeinTypeChange(type: VeinColorType) {
 		if (analysisResult) {
@@ -189,6 +382,7 @@
 			analysisResult = updated;
 			undertone = updated.undertone;
 			photoVeinType = updated.veinColorType;
+			onAnalyzed?.();
 		}
 	}
 </script>
@@ -314,8 +508,83 @@
 		</div>
 	{/if}
 
-	<!-- Upload Area (if no result and not analyzing) -->
-	{#if !analysisResult && !isAnalyzing}
+	<!-- In-browser Live Camera Viewfinder (Mencegah Android mematikan tab) -->
+	{#if isLiveCameraOpen}
+		<div class="mt-4 relative overflow-hidden rounded-2xl border-2 border-primary/50 bg-black text-white shadow-lg">
+			<!-- Live Video Stream -->
+			<div class="relative w-full aspect-4/3 max-h-[360px] sm:max-h-[420px] flex items-center justify-center bg-black overflow-hidden">
+				<video
+					bind:this={videoElement}
+					autoplay
+					playsinline
+					muted
+					class="w-full h-full object-cover"
+				></video>
+
+				<!-- Targeting Overlay Guide for Wrist -->
+				<div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4">
+					<div class="relative w-48 h-36 sm:w-56 sm:h-44 rounded-2xl border-2 border-dashed border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center p-2 text-center">
+						<!-- Reticle corner highlights -->
+						<div class="absolute -top-1 -left-1 size-4 border-t-2 border-l-2 border-primary"></div>
+						<div class="absolute -top-1 -right-1 size-4 border-t-2 border-r-2 border-primary"></div>
+						<div class="absolute -bottom-1 -left-1 size-4 border-b-2 border-l-2 border-primary"></div>
+						<div class="absolute -bottom-1 -right-1 size-4 border-b-2 border-r-2 border-primary"></div>
+
+						<span class="text-[11px] font-semibold text-white drop-shadow-md bg-black/60 px-2.5 py-1 rounded-full border border-white/20">
+							Arahkan Urat Nadi di Sini
+						</span>
+					</div>
+					<p class="text-[11px] text-white/90 mt-3 drop-shadow text-center max-w-xs bg-black/70 px-3 py-1 rounded-full border border-white/10">
+						Gunakan cahaya alami jendela agar warna terbaca akurat
+					</p>
+				</div>
+
+				<!-- Loading Spinner if camera stream initializing -->
+				{#if isCameraLoading}
+					<div class="absolute inset-0 bg-black/85 flex flex-col items-center justify-center gap-2">
+						<div class="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+						<span class="text-xs text-white">Menghubungkan ke kamera perangkat...</span>
+					</div>
+				{/if}
+			</div>
+
+			<!-- Camera Controls Toolbar -->
+			<div class="bg-neutral-900/95 p-3.5 flex items-center justify-between gap-2.5 border-t border-white/10">
+				<!-- Flip Camera Button -->
+				<button
+					type="button"
+					onclick={toggleFacingMode}
+					disabled={isCameraLoading}
+					class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+					title="Balik kamera (depan/belakang)"
+				>
+					<SwitchCameraIcon class="size-4" />
+					<span class="hidden sm:inline">Balik Kamera</span>
+				</button>
+
+				<!-- Shutter Button (Jepret Foto) -->
+				<button
+					type="button"
+					onclick={captureLiveSnapshot}
+					disabled={isCameraLoading}
+					class="group inline-flex items-center gap-2 px-6 py-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+				>
+					<div class="size-3.5 rounded-full bg-white group-hover:scale-110 transition-transform"></div>
+					<span>Jepret Foto</span>
+				</button>
+
+				<!-- Cancel / Close Button -->
+				<button
+					type="button"
+					onclick={stopLiveCamera}
+					class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors cursor-pointer"
+				>
+					<XIcon class="size-4" />
+					<span>Batal</span>
+				</button>
+			</div>
+		</div>
+	{:else if !analysisResult && !isAnalyzing}
 		<div
 			role="region"
 			aria-label="Area unggah foto pergelangan tangan untuk deteksi color tone urat nadi"
@@ -324,20 +593,12 @@
 			ondragleave={handleDragLeave}
 			class="mt-4 relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all {isDragging ? 'border-primary bg-primary/10 scale-[0.99]' : 'border-border/80 bg-card/60 hover:border-primary/50'}"
 		>
-			<!-- Hidden File Inputs -->
+			<!-- Hidden File Input for Gallery / Upload -->
 			<input
 				type="file"
 				accept="image/*"
 				class="sr-only"
 				bind:this={fileInputGallery}
-				onchange={handleFileChange}
-			/>
-			<input
-				type="file"
-				accept="image/*"
-				capture="environment"
-				class="sr-only"
-				bind:this={fileInputCamera}
 				onchange={handleFileChange}
 			/>
 
@@ -352,10 +613,10 @@
 			</div>
 
 			<h4 class="mt-3 text-sm font-semibold text-foreground">
-				Tarik & lepas foto pergelangan tangan bagian dalam di sini
+				Ambil foto langsung atau pilih dari galeri
 			</h4>
 			<p class="mt-1 text-xs text-muted-foreground max-w-md">
-				Arahkan kamera ke pergelangan tangan dengan pencahayaan alami di siang hari agar warna urat nadi terbaca akurat.
+				Arahkan kamera ke pergelangan tangan bagian dalam dengan pencahayaan alami di siang hari agar warna urat nadi terbaca akurat.
 			</p>
 
 			<div class="mt-4 flex flex-wrap items-center justify-center gap-2.5">
@@ -363,11 +624,11 @@
 					type="button"
 					variant="default"
 					size="sm"
-					onclick={() => fileInputCamera?.click()}
-					class="gap-1.5 font-medium shadow-xs"
+					onclick={() => openLiveCamera()}
+					class="gap-1.5 font-semibold shadow-xs"
 				>
 					<CameraIcon class="size-3.5" />
-					Ambil Foto Pergelangan (Kamera)
+					Ambil Foto (Kamera Langsung)
 				</Button>
 
 				<Button
@@ -385,10 +646,10 @@
 			<div class="mt-3.5 flex flex-wrap items-center justify-center gap-3 text-[11px] text-muted-foreground">
 				<div class="flex items-center gap-1">
 					<InfoIcon class="size-3" />
-					<span>Format: JPG, PNG, WEBP (maksimal 10MB)</span>
+					<span>Format: Kamera langsung atau JPG, PNG, WEBP dari galeri</span>
 				</div>
 				<span class="text-border">•</span>
-				<span class="text-muted-foreground font-medium">Gunakan pencahayaan alami agar urat nadi terlihat jelas</span>
+				<span class="text-muted-foreground font-medium">100% diproses di peramban, privasi aman</span>
 			</div>
 		</div>
 	{:else if isAnalyzing}
@@ -480,11 +741,21 @@
 						type="button"
 						variant="ghost"
 						size="sm"
+						onclick={() => openLiveCamera()}
+						class="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+					>
+						<CameraIcon class="size-3.5" />
+						Foto Ulang
+					</Button>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
 						onclick={() => fileInputGallery?.click()}
 						class="text-xs text-muted-foreground hover:text-foreground gap-1.5"
 					>
-						<RefreshCwIcon class="size-3.5" />
-						Ganti Foto
+						<UploadIcon class="size-3.5" />
+						Galeri
 					</Button>
 					<Button
 						type="button"

@@ -61,6 +61,61 @@
 
 	let completeForm: HTMLFormElement | undefined = $state();
 
+	const LOCAL_STORAGE_KEY = "stylecheck_quiz_draft_v1";
+	const isClient = typeof window !== "undefined";
+
+	// Pulihkan data dari localStorage saat pertama kali dimuat jika ada draft lokal yang lebih lengkap
+	$effect(() => {
+		if (isClient) {
+			untrack(() => {
+				try {
+					const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+					if (raw) {
+						const parsed = JSON.parse(raw);
+						if (parsed.answers && typeof parsed.answers === "object") {
+							if (parsed.step > step || (parsed.answers.photoSkinHex && !answers.photoSkinHex)) {
+								answers = { ...answers, ...parsed.answers };
+								step = Math.min(Math.max(parsed.step, 1), 7);
+							}
+						}
+					}
+				} catch (e) {}
+			});
+		}
+	});
+
+	// Simpan otomatis ke localStorage setiap ada perubahan jawaban atau step
+	$effect(() => {
+		if (isClient) {
+			try {
+				localStorage.setItem(
+					LOCAL_STORAGE_KEY,
+					JSON.stringify({
+						step,
+						answers,
+						updatedAt: Date.now()
+					})
+				);
+			} catch (e) {}
+		}
+	});
+
+	function handlePhotoAnalyzed() {
+		if (isClient) {
+			try {
+				localStorage.setItem(
+					LOCAL_STORAGE_KEY,
+					JSON.stringify({
+						step,
+						answers,
+						updatedAt: Date.now()
+					})
+				);
+			} catch (e) {}
+		}
+		saveStepToServer(step);
+	}
+
 	const stepTitles = [
 		{ title: "Kategori Pakaian & Preferensi", subtitle: "Tentukan arah kategori siluet yang sesuai untuk kebutuhanmu." },
 		{ title: "Gaya yang Paling Kamu Sukai", subtitle: "Pilih 1 atau 2 estetika yang ingin kamu bangun dalam koleksimu." },
@@ -223,6 +278,7 @@
 						bind:photoConfidence={answers.photoConfidence}
 						bind:photoVeinType={answers.photoVeinType}
 						bind:photoBase64={answers.photoBase64}
+						onAnalyzed={handlePhotoAnalyzed}
 					/>
 				{:else if step === 7}
 					<Step7BudgetSize
@@ -300,7 +356,13 @@
 			isSubmitting = true;
 			return async ({ result }) => {
 				isSubmitting = false;
-				if (result.type === "failure") {
+				if (result.type === "success" || result.type === "redirect") {
+					if (isClient) {
+						try {
+							localStorage.removeItem(LOCAL_STORAGE_KEY);
+						} catch (e) {}
+					}
+				} else if (result.type === "failure") {
 					toast.error(
 						typeof result.data?.error === "string"
 							? result.data.error
