@@ -48,6 +48,19 @@
 	let errorMessage = $state<string | null>(null);
 	let showVeinGuide = $state(true);
 
+	$effect(() => {
+		if (!analysisResult && (photoSkinHex || photoVeinType)) {
+			analysisResult = buildResultForVein(
+				photoVeinType || (undertone === "hangat" ? "hijau" : undertone === "dingin" ? "biru" : "campuran"),
+				photoSkinHex || (undertone === "hangat" ? "#E8CBB3" : undertone === "dingin" ? "#F0D7C7" : "#E2C8B5"),
+				photoConfidence || 95
+			);
+			if (photoBase64 && !previewUrl) {
+				previewUrl = photoBase64;
+			}
+		}
+	});
+
 	function processImageFile(file: File) {
 		if (!file.type.startsWith("image/")) {
 			errorMessage = "Harap unggah file gambar yang valid (JPG, PNG, atau WEBP).";
@@ -164,11 +177,6 @@
 		if (fileInputCamera) fileInputCamera.value = "";
 	}
 
-	function applyUndertoneManual() {
-		if (analysisResult) {
-			undertone = analysisResult.undertone;
-		}
-	}
 
 	function handleVeinTypeChange(type: VeinColorType) {
 		if (analysisResult) {
@@ -194,14 +202,14 @@
 			<div>
 				<div class="flex items-center gap-2">
 					<h3 class="font-serif text-base font-bold text-foreground">
-						Analisis Color Tone Kulit dari Foto
+						Deteksi Color Tone dari Foto Urat Nadi
 					</h3>
-					<span class="inline-flex items-center rounded-full border border-border/80 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-						Opsional
+					<span class="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+						Wajib Diisi
 					</span>
 				</div>
 				<p class="text-xs text-muted-foreground mt-0.5">
-					Sangat disarankan menggunakan foto <strong class="text-foreground">pergelangan tangan bagian dalam</strong> yang memperlihatkan warna urat nadi untuk deteksi color tone paling presisi.
+					Ambil atau unggah foto <strong class="text-foreground">pergelangan tangan bagian dalam</strong> di bawah cahaya alami untuk menganalisis warna urat nadi dan undertone kulitmu.
 				</p>
 			</div>
 		</div>
@@ -335,7 +343,7 @@
 			<!-- Best Recommendation Pill -->
 			<div class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-semibold text-primary mb-2 shadow-2xs">
 				<SparklesIcon class="size-3.5" />
-				<span>Disarankan: Foto Pergelangan Tangan & Urat Nadi</span>
+				<span>Foto Urat Nadi Pergelangan Tangan</span>
 			</div>
 
 			<div class="flex size-12 items-center justify-center rounded-2xl bg-secondary text-primary shadow-xs mt-1">
@@ -379,7 +387,7 @@
 					<span>Format: JPG, PNG, WEBP (maksimal 10MB)</span>
 				</div>
 				<span class="text-border">•</span>
-				<span class="italic">Tetap bisa menggunakan foto wajah alami tanpa makeup</span>
+				<span class="text-muted-foreground font-medium">Gunakan pencahayaan alami agar urat nadi terlihat jelas</span>
 			</div>
 		</div>
 	{:else if isAnalyzing}
@@ -572,25 +580,12 @@
 				</div>
 			</div>
 
-			<!-- Applied Notification / Sync Button -->
-			<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-xl bg-primary/10 p-3 text-xs text-foreground border border-primary/20">
-				<div class="flex items-center gap-2">
-					<CheckIcon class="size-4 text-primary shrink-0 stroke-[2.5]" />
-					<span>
-						Undertone <strong>{analysisResult.undertone.toUpperCase()}</strong> otomatis diterapkan untuk rekomendasi capsule wardrobemu di bawah.
-					</span>
-				</div>
-				{#if undertone !== analysisResult.undertone}
-					<Button
-						type="button"
-						size="sm"
-						variant="outline"
-						onclick={applyUndertoneManual}
-						class="text-xs h-7 gap-1 border-primary/40 text-primary font-semibold self-end sm:self-auto"
-					>
-						Terapkan Ulang
-					</Button>
-				{/if}
+			<!-- Applied Notification -->
+			<div class="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs text-foreground border border-primary/20">
+				<CheckIcon class="size-4 text-primary shrink-0 stroke-[2.5]" />
+				<span>
+					Undertone <strong>{analysisResult.undertone.toUpperCase()}</strong> berhasil dideteksi dari foto urat nadi dan diterapkan untuk seluruh rekomendasi pakaianmu.
+				</span>
 			</div>
 		</div>
 	{/if}

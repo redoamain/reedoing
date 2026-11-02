@@ -67,7 +67,7 @@
 		{ title: "Rutinitas Harianmu", subtitle: "Capsule wardrobe disusun agar selalu pas dengan kegiatan utamamu." },
 		{ title: "Target Penampilan Pribadi", subtitle: "Apa hal terpenting yang ingin kamu capai lewat panduan ini?" },
 		{ title: "Tantangan Berpakaian Saat Ini", subtitle: "Kami akan membantu menyelesaikan kendala terbesarmu saat memilih outfit." },
-		{ title: "Undertone Kulit & Proporsi Tubuh", subtitle: "Gunakan foto pergelangan tangan (warna urat nadi) untuk mengetahui color tone atau pilih manual." },
+		{ title: "Foto Urat Nadi & Proporsi Tubuh", subtitle: "Gunakan foto urat nadi pergelangan tangan bagian dalam untuk mendeteksi color tone dan undertone kulitmu." },
 		{ title: "Preferensi Ukuran & Anggaran", subtitle: "Opsional — lengkapi catatan untuk daftar belanja pribadimu." }
 	];
 
@@ -127,7 +127,11 @@
 				bodyProportion: answers.bodyProportion
 			});
 			if (!res.success) {
-				toast.error(res.error.issues[0]?.message || "Pilih undertone dan proporsi tubuhmu.");
+				toast.error(res.error.issues[0]?.message || "Lengkapi pilihan pada langkah ini.");
+				return false;
+			}
+			if (!answers.photoSkinHex && !answers.photoVeinType && !answers.photoBase64) {
+				toast.error("Harap ambil atau unggah foto urat nadi pergelangan tangan untuk mendeteksi color tone.");
 				return false;
 			}
 		}

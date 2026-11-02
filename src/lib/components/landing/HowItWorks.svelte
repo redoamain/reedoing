@@ -13,7 +13,7 @@
 		{
 			num: "02",
 			title: "Deteksi Color Tone & Urat Nadi",
-			desc: "Gunakan foto pergelangan tangan bagian dalam untuk mendeteksi warna urat nadi secara otomatis, atau pilih undertonemu langsung secara manual.",
+			desc: "Gunakan foto pergelangan tangan bagian dalam untuk mendeteksi warna urat nadi dan undertone kulitmu secara otomatis.",
 			icon: SparklesIcon
 		},
 		{

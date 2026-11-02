@@ -58,7 +58,7 @@
 						"@type": "HowToStep",
 						"position": 2,
 						"name": "Deteksi Color Tone & Urat Nadi",
-						"text": "Unggah foto pergelangan tangan bagian dalam untuk deteksi otomatis warna urat nadi (kehijauan untuk warm tone, kebiruan untuk cool tone, campuran untuk neutral tone) atau tentukan secara manual."
+						"text": "Unggah foto pergelangan tangan bagian dalam untuk deteksi otomatis warna urat nadi (kehijauan untuk warm tone, kebiruan untuk cool tone, campuran untuk neutral tone)."
 					},
 					{
 						"@type": "HowToStep",

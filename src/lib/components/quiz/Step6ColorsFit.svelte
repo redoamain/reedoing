@@ -1,10 +1,6 @@
 <script lang="ts">
 	import type { Undertone, BodyProportion } from "$lib/types/style";
 	import PhotoAnalyzerInput from "./PhotoAnalyzerInput.svelte";
-	import CheckIcon from "@lucide/svelte/icons/check";
-	import SunIcon from "@lucide/svelte/icons/sun";
-	import SnowflakeIcon from "@lucide/svelte/icons/snowflake";
-	import ScaleIcon from "@lucide/svelte/icons/scale";
 
 	interface Props {
 		undertone: Undertone;
@@ -23,52 +19,6 @@
 		photoVeinType = $bindable(undefined),
 		photoBase64 = $bindable(undefined)
 	}: Props = $props();
-
-	const undertoneOptions: Array<{
-		id: Undertone;
-		title: string;
-		subtitle: string;
-		hints: string[];
-		icon: any;
-		colors: string[];
-	}> = [
-		{
-			id: "hangat",
-			title: "Undertone Hangat (Warm)",
-			subtitle: "Nuansa keemasan / peachy di bawah permukaan kulit",
-			hints: [
-				"Urat nadi pergelangan tangan tampak kehijauan atau zaitun",
-				"Perhiasan emas kuning terlihat lebih bersinar di kulitmu",
-				"Kulit mudah menggelap (tan) alami saat terkena sinar matahari"
-			],
-			icon: SunIcon,
-			colors: ["#C2A27E", "#B85D43", "#3D2B1F"]
-		},
-		{
-			id: "dingin",
-			title: "Undertone Dingin (Cool)",
-			subtitle: "Nuansa kebiruan / merah muda sejuk di bawah kulit",
-			hints: [
-				"Urat nadi pergelangan tangan tampak kebiruan atau ungu",
-				"Perhiasan perak / silver / platinum terlihat paling pas",
-				"Kulit mudah memerah atau terbakar sinar matahari"
-			],
-			icon: SnowflakeIcon,
-			colors: ["#1B2A47", "#6B1D2F", "#33383F"]
-		},
-		{
-			id: "netral",
-			title: "Undertone Netral (Neutral)",
-			subtitle: "Keseimbangan alami tanpa dominasi hangat atau dingin",
-			hints: [
-				"Urat nadi terlihat campuran warna hijau dan biru",
-				"Bagus mengenakan perhiasan emas maupun perak",
-				"Mudah memadukan hampir semua spektrum warna"
-			],
-			icon: ScaleIcon,
-			colors: ["#7A7265", "#768B75", "#26292E"]
-		}
-	];
 
 	const proportionOptions: Array<{
 		id: BodyProportion;
@@ -110,7 +60,7 @@
 </script>
 
 <div class="space-y-8">
-	<!-- 1. Photo Analyzer Input -->
+	<!-- 1. Deteksi Color Tone dari Foto Urat Nadi -->
 	<PhotoAnalyzerInput
 		bind:undertone
 		bind:photoSkinHex
@@ -119,68 +69,14 @@
 		bind:photoBase64
 	/>
 
-	<!-- 2. Undertone Visual / Manual Confirmation -->
+	<!-- 2. Proporsi Siluet Tubuh -->
 	<div>
 		<div class="flex items-center justify-between mb-3">
 			<span class="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-				Pilihan Undertone Kulit
+				Proporsi Siluet Tubuh
 			</span>
-			<span class="text-[11px] text-muted-foreground">Bisa diubah manual kapan saja</span>
+			<span class="text-[11px] text-muted-foreground">Pilih siluet yang paling mendekati tubuhmu</span>
 		</div>
-
-		<div class="grid gap-3 sm:grid-cols-3">
-			{#each undertoneOptions as opt (opt.id)}
-				{@const isSelected = undertone === opt.id}
-				<button
-					type="button"
-					onclick={() => { undertone = opt.id; }}
-					class="relative flex flex-col justify-between rounded-2xl border-2 p-4 text-left transition-all {isSelected ? 'border-primary bg-primary/5 shadow-xs' : 'border-border bg-card hover:border-primary/40'}"
-				>
-					<div>
-						<div class="flex items-center justify-between">
-							<div class="flex size-8 items-center justify-center rounded-lg bg-secondary text-foreground">
-								<opt.icon class="size-4" />
-							</div>
-							<div class="flex size-5 items-center justify-center rounded-full border {isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background'}">
-								{#if isSelected}
-									<CheckIcon class="size-3 stroke-[3]" />
-								{/if}
-							</div>
-						</div>
-
-						<h3 class="mt-3 font-serif text-sm font-bold text-foreground">
-							{opt.title}
-						</h3>
-						<p class="mt-1 text-[11px] text-muted-foreground leading-snug">
-							{opt.subtitle}
-						</p>
-
-						<ul class="mt-3 space-y-1.5 border-t border-border/60 pt-2.5 text-[10px] text-muted-foreground">
-							{#each opt.hints as hint}
-								<li class="flex items-start gap-1.5">
-									<span class="text-primary mt-0.5">•</span>
-									<span>{hint}</span>
-								</li>
-							{/each}
-						</ul>
-					</div>
-
-					<div class="mt-4 flex gap-1.5 pt-2 border-t border-border/60">
-						{#each opt.colors as col}
-							<span class="size-4 rounded-full border border-black/10 shadow-2xs" style="background-color: {col};"></span>
-						{/each}
-						<span class="text-[10px] text-muted-foreground ml-1 self-center">Contoh Aksen</span>
-					</div>
-				</button>
-			{/each}
-		</div>
-	</div>
-
-	<!-- 2. Proporsi Tubuh -->
-	<div>
-		<span class="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-			2. Proporsi Siluet Tubuh
-		</span>
 
 		<div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
 			{#each proportionOptions as prop (prop.id)}
