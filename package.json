@@ -13,9 +13,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
-		"tunnel": "cloudflared tunnel --url http://localhost:5174 --http-host-header localhost:5174",
-		"tunnel:5173": "cloudflared tunnel --url http://localhost:5173 --http-host-header localhost:5173",
-		"tunnel:prod": "cloudflared tunnel --url http://localhost:3303 --http-host-header localhost:3303"
+		"tunnel": "cloudflared tunnel --url http://localhost:5174 --http-host-header localhost:5174 --edge-ip-version 4",
+		"tunnel:5173": "cloudflared tunnel --url http://localhost:5173 --http-host-header localhost:5173 --edge-ip-version 4",
+		"tunnel:prod": "cloudflared tunnel --url http://localhost:3303 --http-host-header localhost:3303 --edge-ip-version 4"
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.12.4",

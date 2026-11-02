@@ -15,4 +15,4 @@ fi
 echo "======================================================="
 echo " Meluncurkan Cloudflare Tunnel untuk http://localhost:${PORT}"
 echo "======================================================="
-cloudflared tunnel --url "http://localhost:${PORT}" --http-host-header "localhost:${PORT}"
+cloudflared tunnel --url "http://localhost:${PORT}" --http-host-header "localhost:${PORT}" --edge-ip-version 4
