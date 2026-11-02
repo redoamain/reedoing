@@ -2,7 +2,6 @@
 	import { page } from "$app/state";
 	import { Button } from "$lib/components/ui/button";
 	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
-	import CompassIcon from "@lucide/svelte/icons/compass";
 	import PaletteIcon from "@lucide/svelte/icons/palette";
 	import SparklesIcon from "@lucide/svelte/icons/sparkles";
 
@@ -149,15 +148,6 @@
 					>
 						{heroConfig?.ctaText || "Mulai Style Check"}
 						<ArrowRightIcon class="size-4" />
-					</Button>
-					<Button
-						href="/panduan/sample-pria"
-						variant="outline"
-						size="lg"
-						class="w-full sm:w-auto gap-2 text-xs font-semibold border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground hover:border-foreground/30 transition-all"
-					>
-						<CompassIcon class="size-3.5 text-foreground" />
-						{heroConfig?.ctaSecondaryText || "Lihat Contoh Lookbook"}
 					</Button>
 				</div>
 				<span class="mt-2.5 sm:mt-3 text-xs text-stone-600 dark:text-stone-400 font-medium">

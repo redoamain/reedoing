@@ -44,7 +44,6 @@
 	import TypeIcon from "@lucide/svelte/icons/type";
 	import EyeIcon from "@lucide/svelte/icons/eye";
 	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
-	import CompassIcon from "@lucide/svelte/icons/compass";
 	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
 	import { toggleMode, mode } from "mode-watcher";
 
@@ -1849,10 +1848,6 @@
 										<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 shadow-2xs">
 											{heroCtaText}
 											<ArrowRightIcon class="size-3" />
-										</span>
-										<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-border text-foreground">
-											<CompassIcon class="size-3" />
-											{heroCtaSecondaryText}
 										</span>
 									</div>
 									<p class="text-[10px] text-muted-foreground">{heroCtaSubtext}</p>

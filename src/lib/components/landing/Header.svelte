@@ -5,7 +5,6 @@
 	import { toggleMode, mode } from "mode-watcher";
 	import SunIcon from "@lucide/svelte/icons/sun";
 	import MoonIcon from "@lucide/svelte/icons/moon";
-	import CompassIcon from "@lucide/svelte/icons/compass";
 
 	let siteName = $derived(page.data?.siteSettings?.name || siteConfig.name);
 	let siteLogo = $derived(page.data?.siteSettings?.logo || "");
@@ -42,16 +41,6 @@
 					<MoonIcon class="size-4 text-stone-800" />
 				{/if}
 			</button>
-
-			<Button
-				href="/panduan/sample-pria"
-				variant="outline"
-				size="sm"
-				class="hidden sm:inline-flex rounded-lg text-xs font-semibold border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground hover:border-foreground/30 transition-all"
-			>
-				<CompassIcon class="size-3.5 text-foreground" />
-				<span>Demo Lookbook</span>
-			</Button>
 
 			<Button
 				href="/mulai"

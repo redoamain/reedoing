@@ -34,7 +34,6 @@ export const siteConfig = {
 	nav: [
 		{ title: "Beranda", href: "/" },
 		{ title: "Mulai Style Check", href: "/mulai" },
-		{ title: "Contoh Demo", href: "/panduan/sample-pria" },
 		{ title: "Panduan Saya", href: "/panduan" }
 	],
 	footer: {

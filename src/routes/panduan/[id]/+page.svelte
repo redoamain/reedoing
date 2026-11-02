@@ -276,39 +276,12 @@
 		<div class="mx-auto max-w-6xl px-3 sm:px-6">
 			<!-- Header Banner Hasil -->
 			<div class="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 transition-colors">
-				{#if data.isSample || data.id === 'sample-pria' || data.id === 'sample-wanita'}
-					<!-- Switcher Demo Pria vs Wanita -->
-					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-stone-100/90 dark:bg-stone-800/80 border border-border/80 mb-5">
-						<div class="flex items-center gap-2">
-							<span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-							<span class="text-xs font-bold text-foreground">Mode Contoh Demo Interaktif</span>
-							<span class="text-[11px] text-muted-foreground hidden sm:inline">· Ganti kategori lookbook:</span>
-						</div>
-						<div class="flex items-center gap-1.5 self-start sm:self-auto">
-							<a
-								href="/panduan/sample-pria"
-								class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all {data.id === 'sample-pria' ? 'bg-background shadow-xs text-foreground font-bold border border-border/80' : 'text-stone-700 dark:text-stone-300 hover:text-foreground hover:bg-background/50'}"
-							>
-								<span>👨</span>
-								<span>Demo Pria</span>
-							</a>
-							<a
-								href="/panduan/sample-wanita"
-								class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all {data.id === 'sample-wanita' ? 'bg-background text-foreground shadow-xs font-bold border border-border/80' : 'text-stone-700 dark:text-stone-300 hover:text-foreground hover:bg-background/50'}"
-							>
-								<span>👩</span>
-								<span>Demo Wanita</span>
-							</a>
-						</div>
-					</div>
-				{/if}
-
 				<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5 sm:gap-6">
 					<div class="space-y-2.5 sm:space-y-3">
 						<div class="flex flex-wrap items-center gap-2">
 							<span class="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-stone-100/80 dark:bg-stone-800/60 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-medium text-foreground">
 								<span class="size-1.5 rounded-full bg-emerald-500"></span>
-								<span>{data.isSample ? 'Lookbook Demo' : 'Panduan Tersimpan'}</span>
+								<span>Panduan Tersimpan</span>
 							</span>
 							<span class="rounded-full border border-border/70 px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-medium text-muted-foreground capitalize">
 								{guide.summary.genderDesc}

@@ -17,64 +17,9 @@ import type { QuizAnswers, StyleGuideResult, Undertone } from "$lib/types/style"
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const id = params.id;
 
-	// Support demo lookbook instant preview
+	// Demo lookbook dinonaktifkan - alihkan ke style check personal
 	if (id === "sample-pria" || id === "sample-wanita") {
-		const isWanita = id === "sample-wanita";
-		const sampleAnswers: QuizAnswers = isWanita
-			? {
-					gender: "wanita",
-					hijab: "tidak",
-					coverage: "standar",
-					styles: ["smart-casual", "minimalis"],
-					routines: ["kantor", "hangout"],
-					goals: ["lebih-rapi", "percaya-diri"],
-					challenges: ["bingung-padu-padan"],
-					undertone: "hangat",
-					bodyProportion: "seimbang",
-					budget: "Rp 350.000 - Rp 900.000",
-					sizeTop: "M",
-					sizeBottom: "29",
-					sizeShoes: "38"
-				}
-			: {
-					gender: "pria",
-					hijab: "tidak",
-					coverage: "standar",
-					styles: ["smart-casual", "streetwear"],
-					routines: ["kantor", "hangout"],
-					goals: ["lebih-rapi", "percaya-diri"],
-					challenges: ["bingung-padu-padan"],
-					undertone: "hangat",
-					bodyProportion: "seimbang",
-					budget: "Rp 350.000 - Rp 900.000",
-					sizeTop: "L",
-					sizeBottom: "32",
-					sizeShoes: "42"
-				};
-
-		const guidesByTone: Record<Undertone, StyleGuideResult> = {
-			hangat: generateStyleGuide({ ...sampleAnswers, undertone: "hangat" }),
-			dingin: generateStyleGuide({ ...sampleAnswers, undertone: "dingin" }),
-			netral: generateStyleGuide({ ...sampleAnswers, undertone: "netral" })
-		};
-
-		return {
-			id,
-			isSample: true,
-			sampleGender: isWanita ? "wanita" : "pria",
-			result: guidesByTone[sampleAnswers.undertone],
-			guidesByTone,
-			checks: {},
-			aiImages: {},
-			hasGeminiKey: false,
-			userAnswers: sampleAnswers,
-			affiliateSettings: {
-				shopee_fallback_url: "https://shopee.co.id",
-				affiliate_disclaimer:
-					"Tautan pakaian di atas terhubung ke toko resmi di Shopee. Kami dapat memperoleh sedikit komisi dari pembelianmu tanpa biaya tambahan."
-			},
-			isOwner: false
-		};
+		throw redirect(303, "/mulai");
 	}
 
 	const submission = await getSubmissionById(id);
