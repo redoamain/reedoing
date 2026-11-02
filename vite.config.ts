@@ -5,6 +5,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import path from 'path';
 
 export default defineConfig({
+	server: {
+		allowedHosts: true
+	},
 	resolve: {
 		alias: {
 			$lib: path.resolve(import.meta.dirname, './src/lib')
