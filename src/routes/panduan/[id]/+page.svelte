@@ -627,56 +627,115 @@
 				</div>
 			{/snippet}
 
+			<!-- MOBILE RESPONSIVE SIDEBAR (DASHBOARD KONTROL PANDUAN) -->
+			<div class="lg:hidden rounded-2xl border border-border/80 bg-card p-3.5 sm:p-5 mb-5 shadow-2xs space-y-3.5 no-print">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-2.5 min-w-0">
+						<div class="flex size-9 items-center justify-center rounded-lg border border-border bg-stone-50 dark:bg-stone-800 text-foreground shrink-0 shadow-2xs">
+							<PaletteIcon class="size-4" />
+						</div>
+						<div class="min-w-0">
+							<div class="text-xs font-bold text-foreground leading-tight truncate">Undertone {guide.palette.undertone}</div>
+							<div class="text-[10px] text-muted-foreground truncate">{guide.palette.name}</div>
+						</div>
+					</div>
+					<span class="rounded-full border border-border/80 px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground capitalize shrink-0">
+						{guide.summary.genderDesc}
+					</span>
+				</div>
+
+				<!-- Undertone Switcher Reaktif Instan di Mobile -->
+				<div class="pt-2 border-t border-border/60">
+					<div class="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5 font-medium">
+						<span>Tone Kulit Aktif:</span>
+						<span class="text-[9px] uppercase tracking-wider font-semibold text-foreground">Reaktif Instan</span>
+					</div>
+					<div class="grid grid-cols-3 gap-1.5">
+						<button
+							type="button"
+							onclick={() => (activeUndertone = "hangat")}
+							class="py-1.5 px-1 rounded-lg text-xs font-medium transition-all text-center {activeUndertone === 'hangat' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
+						>
+							☀️ Warm
+						</button>
+						<button
+							type="button"
+							onclick={() => (activeUndertone = "dingin")}
+							class="py-1.5 px-1 rounded-lg text-xs font-medium transition-all text-center {activeUndertone === 'dingin' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
+						>
+							❄️ Cool
+						</button>
+						<button
+							type="button"
+							onclick={() => (activeUndertone = "netral")}
+							class="py-1.5 px-1 rounded-lg text-xs font-medium transition-all text-center {activeUndertone === 'netral' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
+						>
+							⚖️ Neutral
+						</button>
+					</div>
+				</div>
+
+				<!-- 6 Palet Warna Mini Swatches -->
+				<div class="pt-2 border-t border-border/60">
+					<div class="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5 font-medium">
+						<span>Palet Harmoni Kulit (6 Warna):</span>
+					</div>
+					<div class="grid grid-cols-6 gap-1.5">
+						{#each guide.palette.baseColors.slice(0, 4) as col}
+							<div class="flex flex-col items-center gap-0.5 p-1 rounded-lg bg-stone-50 dark:bg-stone-900/40 border border-border/60" title="{col.name}: {col.hex}">
+								<span class="size-4.5 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}"></span>
+								<span class="text-[7.5px] font-mono text-muted-foreground truncate w-full text-center">{col.hex}</span>
+							</div>
+						{/each}
+						{#each guide.palette.accentColors.slice(0, 2) as col}
+							<div class="flex flex-col items-center gap-0.5 p-1 rounded-lg bg-primary/5 border border-primary/20" title="Aksen: {col.name}">
+								<span class="size-4.5 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}"></span>
+								<span class="text-[7.5px] font-mono text-primary font-semibold truncate w-full text-center">Aksen</span>
+							</div>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Progres Koleksi Wardrobe -->
+				<div class="pt-2 border-t border-border/60 space-y-1">
+					<div class="flex items-center justify-between text-xs">
+						<span class="font-medium text-foreground">Kesiapan Capsule Wardrobe</span>
+						<span class="font-mono text-muted-foreground font-semibold">{ownedCount}/{totalItemsCount} ({ownedPercentage}%)</span>
+					</div>
+					<Progress value={ownedPercentage} class="h-2 bg-stone-100 dark:bg-stone-800" />
+					<p class="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
+						{ownedPercentage}% dari {totalItemsCount} item inti sudah kamu miliki di lemari.
+					</p>
+				</div>
+			</div>
+
 			<!-- Tabs Navigasi 5 Bagian — DEFAULT OUTFIT & WARNA -->
 			<Tabs.Root bind:value={activeGuideTab} class="w-full">
-				<!-- STICKY MOBILE NAVIGATION BAR (horizontal scroll tabs + drawer trigger) -->
+				<!-- STICKY MOBILE NAVIGATION BAR (horizontal scroll tabs) -->
 				<div class="lg:hidden sticky top-14 sm:top-16 z-30 -mx-3 px-3 py-2 bg-background/95 backdrop-blur-md border-b border-border/70 mb-4 transition-all flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none no-print">
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => (isMobileSidebarOpen = true)}
-						class="shrink-0 gap-1.5 h-8 px-2.5 rounded-lg border-border/80 text-xs font-semibold text-foreground hover:bg-muted bg-card shadow-2xs"
-					>
-						<SlidersHorizontalIcon class="size-3 text-muted-foreground" />
-						<span>Profil</span>
-					</Button>
-
-					<Tabs.List class="flex h-auto p-0.5 bg-stone-100/70 dark:bg-stone-900/60 rounded-lg gap-1 border border-border/70">
-						<Tabs.Trigger value="outfit" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<CompassIcon class="size-3" />
+					<Tabs.List class="flex w-full h-auto p-1 bg-stone-100/70 dark:bg-stone-900/60 rounded-xl gap-1 border border-border/70">
+						<Tabs.Trigger value="outfit" class="flex-1 shrink-0 gap-1 py-2 px-2 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap text-center">
+							<CompassIcon class="size-3.5 inline mr-1" />
 							<span>Outfit ({guide.outfits.length})</span>
 						</Tabs.Trigger>
-						<Tabs.Trigger value="wardrobe" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<ShirtIcon class="size-3" />
+						<Tabs.Trigger value="wardrobe" class="flex-1 shrink-0 gap-1 py-2 px-2 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap text-center">
+							<ShirtIcon class="size-3.5 inline mr-1" />
 							<span>Wardrobe ({guide.capsule?.length || 12})</span>
 						</Tabs.Trigger>
-						<Tabs.Trigger value="belanja" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<ShoppingBagIcon class="size-3" />
-							<span>Belanja ({ownedCount}/{totalItemsCount})</span>
+						<Tabs.Trigger value="belanja" class="flex-1 shrink-0 gap-1 py-2 px-2 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap text-center">
+							<ShoppingBagIcon class="size-3.5 inline mr-1" />
+							<span>Belanja ({ownedCount})</span>
 						</Tabs.Trigger>
-						<Tabs.Trigger value="warna" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<PaletteIcon class="size-3" />
+						<Tabs.Trigger value="warna" class="shrink-0 gap-1 py-2 px-2.5 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<PaletteIcon class="size-3.5 inline mr-1" />
 							<span>Warna</span>
 						</Tabs.Trigger>
-						<Tabs.Trigger value="ringkasan" class="shrink-0 gap-1 py-1.5 px-2.5 text-xs font-medium rounded-md transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<InfoIcon class="size-3" />
-							<span>Ringkasan</span>
+						<Tabs.Trigger value="ringkasan" class="shrink-0 gap-1 py-2 px-2.5 text-xs font-medium rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
+							<InfoIcon class="size-3.5 inline mr-1" />
+							<span>Info</span>
 						</Tabs.Trigger>
 					</Tabs.List>
 				</div>
-
-				<!-- MOBILE SIDEBAR SHEET DRAWER -->
-				<Sheet.Root bind:open={isMobileSidebarOpen}>
-					<Sheet.Content side="left" class="w-[88vw] max-w-sm p-4 overflow-y-auto space-y-4">
-						<Sheet.Header class="text-left pb-2 border-b border-border/70">
-							<Sheet.Title class="font-serif text-lg">Menu Panduan & Profil</Sheet.Title>
-							<Sheet.Description class="text-xs text-muted-foreground">
-								Akses cepat profil color tone, progres lemari, dan navigasi lookbook.
-							</Sheet.Description>
-						</Sheet.Header>
-						{@render sidebarContent(true)}
-					</Sheet.Content>
-				</Sheet.Root>
 
 				<!-- 2-COLUMN LAYOUT ON DESKTOP -->
 				<div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
@@ -1073,53 +1132,53 @@
 						</span>
 					</div>
 
-					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
 						{#each guide.capsule as item (item.id)}
 							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl shadow-2xs">
 								<div>
-									<div class="aspect-4/3 bg-stone-50 dark:bg-stone-900/40 p-3 flex items-center justify-center border-b border-border/70 relative overflow-hidden">
+									<div class="aspect-square sm:aspect-4/3 bg-stone-50 dark:bg-stone-900/40 p-2 sm:p-3 flex items-center justify-center border-b border-border/70 relative overflow-hidden">
 										<img
 											src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
 											alt={item.name}
 											loading="lazy"
 											class="h-full w-full object-cover rounded-lg transition-transform duration-500 hover:scale-105"
 										/>
-										<span class="absolute top-3 left-3 rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+										<span class="absolute top-2 left-2 rounded border border-border/80 bg-background/90 backdrop-blur-xs px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
 											{item.category}
 										</span>
-										<span class="absolute top-3 right-3 text-[10px] font-mono text-muted-foreground bg-background/90 backdrop-blur-xs px-2 py-0.5 rounded border border-border/80">
-											Versatilitas: {item.versatileScore}/10
+										<span class="hidden xs:inline-block absolute top-2 right-2 text-[9px] sm:text-[10px] font-mono text-muted-foreground bg-background/90 backdrop-blur-xs px-1.5 py-0.5 rounded border border-border/80">
+											⭐ {item.versatileScore}/10
 										</span>
 									</div>
 
-									<CardHeader class="p-4 sm:p-5 pb-2">
-										<div class="flex items-start justify-between gap-2">
-											<CardTitle class="font-serif text-base sm:text-lg font-normal text-foreground line-clamp-1">
+									<CardHeader class="p-2.5 sm:p-5 pb-1 sm:pb-2">
+										<div class="flex items-start justify-between gap-1.5 sm:gap-2">
+											<CardTitle class="font-serif text-xs sm:text-base md:text-lg font-semibold text-foreground line-clamp-1 sm:line-clamp-none">
 												{item.name}
 											</CardTitle>
 											{#if item.priceEstimate}
-												<span class="font-mono text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-border/70 shrink-0">
+												<span class="font-mono text-[9px] sm:text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded border border-border/70 shrink-0">
 													{item.priceEstimate}
 												</span>
 											{/if}
 										</div>
-										<div class="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
-											<span class="size-2.5 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.color)}"></span>
-											<span>Rekomendasi Warna:</span>
-											<span class="font-semibold text-foreground">{item.color}</span>
+										<div class="flex items-center gap-1.5 pt-1 text-[11px] sm:text-xs text-muted-foreground">
+											<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.color)}"></span>
+											<span class="hidden sm:inline">Warna:</span>
+											<span class="font-medium text-foreground truncate">{item.color}</span>
 										</div>
 									</CardHeader>
 
-									<CardContent class="p-4 sm:p-5 pt-1">
-										<div class="rounded-lg bg-stone-50/60 dark:bg-stone-900/30 p-3 text-xs text-muted-foreground leading-relaxed border border-border/50 font-normal">
-											<span class="font-medium text-foreground block mb-1">Panduan Fitting & Bahan:</span>
+									<CardContent class="p-2.5 sm:p-5 pt-1">
+										<div class="rounded-lg bg-stone-50/60 dark:bg-stone-900/30 p-2 sm:p-3 text-[11px] sm:text-xs text-muted-foreground leading-relaxed border border-border/50 font-normal line-clamp-2 sm:line-clamp-none">
+											<span class="font-medium text-foreground block mb-0.5">Fitting:</span>
 											{item.fitTips}
 										</div>
 									</CardContent>
 								</div>
 
-								<div class="border-t border-border/60 p-3 sm:p-3.5 bg-stone-50/40 dark:bg-stone-900/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-									<div class="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
+								<div class="border-t border-border/60 p-2 sm:p-3.5 bg-stone-50/40 dark:bg-stone-900/20 flex flex-col gap-2">
+									<div class="hidden sm:flex flex-wrap gap-1 text-[10px] text-muted-foreground">
 										{#each item.occasions as occ}
 											<span class="rounded bg-background px-2 py-0.5 border border-border/70 capitalize font-normal text-[10px]">
 												{occ}
@@ -1132,11 +1191,12 @@
 											href={item.affiliateUrl}
 											target="_blank"
 											rel="noopener noreferrer nofollow"
-											class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-2 sm:py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
+											class="inline-flex w-full items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-2 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
 											title="Beli {item.name} di Shopee"
 										>
 											<ShoppingBagIcon class="size-3" />
-											<span>Beli di Shopee</span>
+											<span class="hidden sm:inline">Beli di Shopee</span>
+											<span class="sm:hidden">Shopee</span>
 											<ExternalLinkIcon class="size-2.5 opacity-80" />
 										</a>
 									{/if}
@@ -1330,7 +1390,7 @@
 								<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group shadow-2xs">
 									<div>
 										{#if currentImage}
-											<div class="relative h-56 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
+											<div class="relative h-48 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
 												<img
 													src={currentImage}
 													alt={outfit.name}
