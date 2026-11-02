@@ -5,10 +5,10 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3303:3303"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3303
       - DATABASE_PATH=/app/data/app.db
     volumes:
       - ./data:/app/data

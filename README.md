@@ -157,15 +157,47 @@ Cukup ubah nilai di file tersebut dan seluruh halaman beranda, judul SEO, metada
 
 Karena aplikasi menggunakan SQLite lokal (`data/app.db`), server deploy **wajib mendukung disk persisten** agar data panduan pengguna tidak hilang saat restart.
 
-### Opsi 1: Menjalankan dengan Docker (VPS / Server Pribadi)
+### Opsi 1: Deploy di aaPanel (Port 3303)
+
+Aplikasi telah dikonfigurasi untuk port **3303** di aaPanel, baik via **Node Project Manager** maupun **Docker Compose**.
+
+#### Metode A: aaPanel Node Project / PM2 (Direkomendasikan)
+1. Unggah source code ke direktori website aaPanel (misal: `/www/wwwroot/domainanda.com`).
+2. Masuk ke terminal di direktori proyek dan jalankan:
+   ```bash
+   npm install
+   npm run build
+   ```
+3. Di dashboard aaPanel:
+   - Masuk ke menu **Website** > tab **Node project** > klik **Add Node project**.
+   - **Path**: Pilih direktori proyek (`/www/wwwroot/domainanda.com`).
+   - **Run opt**: Pilih `ecosystem.config.cjs` (atau pilih Start script `npm run start`).
+   - **Port**: Isi `3303`.
+   - **Node version**: Pilih Node.js v20 atau v22.
+   - Klik **Submit** untuk menjalankan aplikasi.
+4. **Setup Reverse Proxy Domain**:
+   - Di tab **PHP project** atau **Node project**, klik nama domain Anda > pilih menu **Reverse Proxy** > **Add reverse proxy**.
+   - **Proxy Name**: `app-proxy`
+   - **Target URL**: `http://127.0.0.1:3303`
+   - **Sent domain**: `$host`
+   - Klik **Save**. Domain Anda kini langsung mengarah ke port 3303 dengan SSL HTTPS aktif.
+
+#### Metode B: aaPanel Docker
+Jalankan melalui terminal aaPanel di folder proyek:
+```bash
+docker compose up -d --build
+```
+Container akan otomatis berjalan di port host `3303` (`3303:3303`) dengan volume data persisten di `./data`.
+
+### Opsi 2: Menjalankan dengan Docker (VPS Standar)
 Gunakan Docker dan Docker Compose yang telah disediakan:
 
 ```bash
 docker compose up -d --build
 ```
-Folder `./data` di host server akan di-mount ke `/app/data` di dalam container, memastikan database SQLite selalu aman dan persisten.
+Port host `3303` akan dihubungkan ke container, dan folder `./data` akan di-mount ke `/app/data` untuk menjaga persistensi database SQLite.
 
-### Opsi 2: Deploy ke Fly.io (Gratis / Murah dengan Volume)
+### Opsi 3: Deploy ke Fly.io (Gratis / Murah dengan Volume)
 1. Pasang Fly CLI (`flyctl`):
    ```bash
    curl -L https://fly.io/install.sh | sh

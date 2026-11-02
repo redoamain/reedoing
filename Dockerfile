@@ -21,7 +21,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3303
 ENV DATABASE_PATH=/app/data/app.db
 
 # Buat folder data persisten
@@ -34,7 +34,7 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/static ./static
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3303
 
 # Mount point untuk volume database SQLite
 VOLUME ["/app/data"]
