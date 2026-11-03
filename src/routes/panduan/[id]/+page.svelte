@@ -2,13 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { toast } from "svelte-sonner";
 	import { siteConfig } from "$lib/config";
-	import * as Tabs from "$lib/components/ui/tabs";
-	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 	import * as Dialog from "$lib/components/ui/dialog";
-	import * as Sheet from "$lib/components/ui/sheet";
-	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
-	import { Card, CardHeader, CardTitle, CardContent } from "$lib/components/ui/card";
-	import { Badge } from "$lib/components/ui/badge";
 	import { Button } from "$lib/components/ui/button";
 	import { Progress } from "$lib/components/ui/progress";
 	import Pagination from "$lib/components/ui/pagination";
@@ -18,49 +12,33 @@
 	import RotateCcwIcon from "@lucide/svelte/icons/rotate-ccw";
 	import Trash2Icon from "@lucide/svelte/icons/trash-2";
 	import CheckIcon from "@lucide/svelte/icons/check";
-	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
-	import PaletteIcon from "@lucide/svelte/icons/palette";
-	import ShirtIcon from "@lucide/svelte/icons/shirt";
-	import CompassIcon from "@lucide/svelte/icons/compass";
 	import ShoppingBagIcon from "@lucide/svelte/icons/shopping-bag";
-	import CheckCircleIcon from "@lucide/svelte/icons/check-circle";
-	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
-	import InfoIcon from "@lucide/svelte/icons/info";
-	import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import SunIcon from "@lucide/svelte/icons/sun";
 	import MoonIcon from "@lucide/svelte/icons/moon";
 	import SnowflakeIcon from "@lucide/svelte/icons/snowflake";
 	import ScaleIcon from "@lucide/svelte/icons/scale";
 	import Loader2Icon from "@lucide/svelte/icons/loader-2";
+	import InfoIcon from "@lucide/svelte/icons/info";
+	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
+	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
+	import UploadCloudIcon from "@lucide/svelte/icons/upload-cloud";
 	import SparklesIcon from "@lucide/svelte/icons/sparkles";
-	import TagIcon from "@lucide/svelte/icons/tag";
+	import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
 	import { toggleMode, mode } from "mode-watcher";
 
 	import type { PageData } from "./$types";
-	import type { RoutineOption, Outfit, ShoppingItem, CapsuleItem, Undertone } from "$lib/types/style";
+	import type { Outfit, Undertone } from "$lib/types/style";
 
 	let { data }: { data: PageData } = $props();
 
-	// State undertone aktif — dapat diubah langsung & reaktif secara instan di website hasil
-	let activeUndertone = $state<Undertone>("hangat");
-
-	$effect(() => {
-		activeUndertone =
-			(data.userAnswers?.undertone as Undertone) ||
-			(data.result?.palette?.undertone as Undertone) ||
-			"hangat";
-	});
-
-	// Panduan aktif yang otomatis reaktif saat undertone diubah (Warm, Cool, Neutral)
-	let activeGuide = $derived.by(() => {
-		if (data.guidesByTone && data.guidesByTone[activeUndertone]) {
-			return data.guidesByTone[activeUndertone];
-		}
-		return data.result;
-	});
-
-	let guide = $derived(activeGuide);
+	// Panduan personal spesifik sesuai hasil kuis & foto pengguna
+	let guide = $derived(data.result);
+	let userTone = $derived<Undertone>(
+		(guide?.palette?.undertone as Undertone) ||
+		(data.userAnswers?.undertone as Undertone) ||
+		"hangat"
+	);
 	let shoppingChecks = $state<Record<string, boolean>>({});
 
 	$effect(() => {
@@ -69,11 +47,10 @@
 		}
 	});
 
-	// State filter situasi outfit — LANGSUNG TAMPILKAN OUTFIT & WARNA REKOMENDASI SECARA DEFAULT
+	// Filter situasi outfit
 	let selectedOccasion = $state<string>("semua");
-	let activeGuideTab = $state<string>("outfit");
 
-	// Helper untuk mendapatkan kode hex warna pakaian agar dapat ditampilkan sebagai swatch dot
+	// Helper untuk mendapatkan kode hex warna pakaian
 	function getColorHex(colorName: string): string {
 		const lower = (colorName || "").toLowerCase();
 		const allColors = [
@@ -117,7 +94,7 @@
 	}> = {
 		hangat: {
 			title: "Warm Earth & Golden Tone",
-			badge: "☀️ Warm Tone",
+			badge: "Warm Tone",
 			skinHex: "#D89F6B",
 			vein: "Kehijauan (Greenish Veins)",
 			veinDesc: "Pembuluh darah tampak kehijauan karena bias pigmen keemasan alami kulit.",
@@ -127,7 +104,7 @@
 		},
 		dingin: {
 			title: "Cool Slate & Jewel Tone",
-			badge: "❄️ Cool Tone",
+			badge: "Cool Tone",
 			skinHex: "#E2A794",
 			vein: "Kebiruan / Ungu (Blue/Purple Veins)",
 			veinDesc: "Pembuluh darah tampak jelas kebiruan di bawah kulit berspektrum sejuk alami.",
@@ -137,7 +114,7 @@
 		},
 		netral: {
 			title: "Neutral Mineral & Balanced Tone",
-			badge: "⚖️ Neutral Tone",
+			badge: "Neutral Tone",
 			skinHex: "#DFAC88",
 			vein: "Campuran Hijau & Biru (Balanced Veins)",
 			veinDesc: "Keseimbangan harmonis tanpa dominasi spektrum hangat atau dingin ekstrem.",
@@ -151,7 +128,14 @@
 	let aiImages = $state<Record<string, string>>({});
 	let isGeneratingOutfitId = $state<string | null>(null);
 	let currentTryOnOutfitId = $state<string>("");
+	let currentTryOnPhoto = $state<string>("");
 	let tryOnForm: HTMLFormElement | undefined = $state();
+
+	// Modal saran upload foto wajah sebelum try on
+	let isPhotoPromptDialogOpen = $state(false);
+	let pendingTryOnOutfitId = $state<string>("");
+	let uploadedFacePhoto = $state<string | null>(null);
+	let photoInputRef: HTMLInputElement | undefined = $state();
 
 	$effect(() => {
 		if (data.aiImages) {
@@ -159,15 +143,60 @@
 		}
 	});
 
-	function triggerTryOn(outfitId: string) {
+	function handleTryOnClick(outfitId: string) {
+		const existingPhoto = uploadedFacePhoto || data.userAnswers?.photoBase64;
+		if (existingPhoto) {
+			// Sudah ada foto wajah, langsung jalankan simulasi AI
+			triggerTryOn(outfitId, existingPhoto);
+		} else {
+			// Belum ada foto wajah: tampilkan rekomendasi upload foto terlebih dahulu
+			pendingTryOnOutfitId = outfitId;
+			isPhotoPromptDialogOpen = true;
+		}
+	}
+
+	function handleFacePhotoSelected(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+
+		if (file.size > 5 * 1024 * 1024) {
+			toast.error("Ukuran foto maksimal 5MB.");
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			uploadedFacePhoto = e.target?.result as string;
+			toast.success("Foto wajah berhasil dipilih!");
+		};
+		reader.readAsDataURL(file);
+	}
+
+	function confirmTryOnWithPhoto() {
+		if (pendingTryOnOutfitId) {
+			isPhotoPromptDialogOpen = false;
+			triggerTryOn(pendingTryOnOutfitId, uploadedFacePhoto || undefined);
+		}
+	}
+
+	function proceedTryOnWithoutPhoto() {
+		if (pendingTryOnOutfitId) {
+			isPhotoPromptDialogOpen = false;
+			triggerTryOn(pendingTryOnOutfitId);
+		}
+	}
+
+	function triggerTryOn(outfitId: string, photoBase64?: string) {
 		currentTryOnOutfitId = outfitId;
-		tryOnForm?.requestSubmit();
+		currentTryOnPhoto = photoBase64 || uploadedFacePhoto || data.userAnswers?.photoBase64 || "";
+		setTimeout(() => {
+			tryOnForm?.requestSubmit();
+		}, 50);
 	}
 
 	// Dialog state
-	let isMobileSidebarOpen = $state(false);
 	let isDeleteDialogOpen = $state(false);
-	let isResetDialogOpen = $state(false);
 
 	// Hitung progres kepemilikan item belanja
 	let ownedCount = $derived(
@@ -178,31 +207,54 @@
 		Math.round((ownedCount / totalItemsCount) * 100)
 	);
 
+	function matchesOccasion(outfitOccasion: string, filterId: string): boolean {
+		if (!filterId || filterId === "semua") return true;
+		const o = (outfitOccasion || "").toLowerCase().trim();
+		const f = filterId.toLowerCase().trim();
+		if (o === f) return true;
+		if (f === "kantor" && (o === "kerja" || o.includes("kantor") || o.includes("kerja"))) return true;
+		if (f === "kampus" && (o === "kuliah" || o.includes("kampus") || o.includes("kuliah"))) return true;
+		if (f === "santai" && (o === "casual" || o.includes("santai") || o.includes("wfh"))) return true;
+		if (f === "formal" && (o === "resmi" || o.includes("formal"))) return true;
+		if (f === "meeting" && (o.includes("meet") || o.includes("klien"))) return true;
+		if (f === "hangout" && (o.includes("hangout") || o.includes("weekend"))) return true;
+		return false;
+	}
+
+	function selectOccasion(filterId: string) {
+		selectedOccasion = filterId;
+		outfitPage = 1;
+	}
+
+	function getOccasionCount(filterId: string): number {
+		if (!guide?.outfits) return 0;
+		if (filterId === "semua") return guide.outfits.length;
+		return guide.outfits.filter((o: Outfit) => matchesOccasion(o.occasion, filterId)).length;
+	}
+
 	// Filter outfit sesuai situasi
 	let filteredOutfits = $derived.by(() => {
 		if (!guide?.outfits) return [];
 		if (selectedOccasion === "semua") return guide.outfits;
-		return guide.outfits.filter(
-			(o: Outfit) => o.occasion === selectedOccasion
+		return guide.outfits.filter((o: Outfit) =>
+			matchesOccasion(o.occasion, selectedOccasion)
 		);
 	});
 
 	// Pagination outfit lookbook
 	let outfitPage = $state(1);
-	const outfitsPerPage = 9;
+	const outfitsPerPage = 6;
 	let paginatedOutfits = $derived.by(() => {
-		const start = (outfitPage - 1) * outfitsPerPage;
+		const total = filteredOutfits.length;
+		const maxPage = Math.max(1, Math.ceil(total / outfitsPerPage));
+		const currentPage = Math.min(Math.max(1, outfitPage), maxPage);
+		const start = (currentPage - 1) * outfitsPerPage;
 		return filteredOutfits.slice(start, start + outfitsPerPage);
 	});
 
-	$effect(() => {
-		selectedOccasion;
-		outfitPage = 1;
-	});
-
-	function scrollToLookbook() {
+	function scrollToSection(sectionId: string) {
 		if (typeof document !== "undefined") {
-			const el = document.getElementById("katalog-lookbook-heading");
+			const el = document.getElementById(sectionId);
 			if (el) {
 				el.scrollIntoView({ behavior: "smooth", block: "start" });
 			}
@@ -227,7 +279,7 @@
 		if (typeof window !== "undefined") {
 			navigator.clipboard.writeText(window.location.href);
 			toast.success("Tautan panduan berhasil disalin!", {
-				description: "Simpan atau buka di perangkat lain kapan saja."
+				description: "Bisa kamu simpan atau buka kembali kapan saja."
 			});
 		}
 	}
@@ -241,11 +293,11 @@
 	const occasionFilters: Array<{ id: string; label: string }> = [
 		{ id: "semua", label: "Semua Look" },
 		{ id: "kantor", label: "Kerja Kantor" },
-		{ id: "meeting", label: "Meeting Klien" },
-		{ id: "kampus", label: "Kuliah / Kampus" },
+		{ id: "meeting", label: "Meeting" },
+		{ id: "kampus", label: "Kuliah" },
 		{ id: "hangout", label: "Hangout" },
 		{ id: "santai", label: "Santai / WFH" },
-		{ id: "formal", label: "Acara Formal" }
+		{ id: "formal", label: "Formal" }
 	];
 </script>
 
@@ -255,52 +307,27 @@
 	<meta name="description" content="Panduan personal capsule wardrobe fungsional dan palet warna kulit." />
 </svelte:head>
 
-<div class="min-h-screen bg-background text-foreground flex flex-col pb-16">
-	<!-- Top Navigation Bar -->
-	<header class="border-b border-border/70 bg-background/90 backdrop-blur-md sticky top-0 z-40 transition-colors no-print">
-		<div class="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between px-3 sm:px-6">
-			<!-- Brand & Breadcrumb -->
-			<div class="flex items-center gap-2 sm:gap-3 min-w-0">
-				<a href="/" class="group flex items-center gap-2 sm:gap-3 min-w-0">
-					<div class="flex size-7 sm:size-8 items-center justify-center rounded-lg border border-border bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-stone-100 transition-colors group-hover:border-foreground/30 shrink-0">
-						<span class="font-serif text-xs sm:text-sm font-bold tracking-tight">R</span>
-					</div>
-					<div class="flex flex-col min-w-0">
-						<span class="font-serif text-base sm:text-lg font-bold tracking-tight text-foreground leading-none truncate">
-							{siteConfig.name}
-						</span>
-						<span class="text-[8px] sm:text-[9px] tracking-[0.2em] uppercase font-semibold text-muted-foreground mt-0.5">
-							Personal Lookbook
-						</span>
-					</div>
-				</a>
-
-				<span class="hidden md:inline-block h-4 w-px bg-border/80"></span>
-
-				<div class="hidden md:flex items-center gap-2">
-					<span class="rounded-full border border-border/70 bg-stone-50 dark:bg-stone-900/50 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">
-						{guide.summary.genderDesc}
+<div class="min-h-screen bg-background text-foreground flex flex-col pb-20 antialiased selection:bg-stone-900 selection:text-white dark:selection:bg-stone-100 dark:selection:text-stone-900">
+	<!-- TOP NAVIGATION BAR -->
+	<header class="border-b border-border/70 bg-background/95 backdrop-blur-md sticky top-0 z-40 transition-colors no-print">
+		<div class="mx-auto flex h-14 sm:h-16 max-w-4xl items-center justify-between px-3 sm:px-6">
+			<!-- Brand -->
+			<a href="/" class="group flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1 sm:flex-initial mr-2 sm:mr-0">
+				<div class="flex size-7 sm:size-8 items-center justify-center rounded-lg border border-border bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-stone-100 transition-colors group-hover:border-foreground/30 shrink-0 shadow-2xs">
+					<span class="font-serif text-xs sm:text-sm font-bold">R</span>
+				</div>
+				<div class="flex flex-col min-w-0">
+					<span class="font-serif text-sm sm:text-base md:text-lg font-bold tracking-tight text-foreground leading-none truncate">
+						{siteConfig.name}
 					</span>
-					<span class="rounded-full border border-border/70 bg-stone-50 dark:bg-stone-900/50 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground capitalize">
-						Undertone {guide.palette.undertone}
+					<span class="hidden sm:inline text-[9px] tracking-widest uppercase font-semibold text-muted-foreground mt-0.5">
+						Personal Lookbook
 					</span>
 				</div>
-			</div>
+			</a>
 
-			<!-- Action Buttons -->
-			<div class="flex items-center gap-1 sm:gap-2 shrink-0">
-				<!-- Tombol Menu & Profil untuk Mobile / Tablet -->
-				<Button
-					variant="outline"
-					size="sm"
-					onclick={() => (isMobileSidebarOpen = true)}
-					class="lg:hidden gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg border-border/80 text-xs font-semibold text-foreground hover:bg-muted active:scale-95 shrink-0 shadow-2xs"
-					title="Buka menu navigasi dan profil personal"
-				>
-					<SlidersHorizontalIcon class="size-3.5 text-muted-foreground" />
-					<span class="text-xs">Profil</span>
-				</Button>
-
+			<!-- Actions -->
+			<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
 				<!-- Theme Toggle -->
 				<button
 					onclick={toggleMode}
@@ -310,25 +337,25 @@
 					title="Ganti mode gelap/terang"
 				>
 					{#if mode.current === "dark"}
-						<SunIcon class="size-3.5 sm:size-4 text-stone-200" />
+						<SunIcon class="size-4 text-stone-200" />
 					{:else}
-						<MoonIcon class="size-3.5 sm:size-4 text-stone-700" />
+						<MoonIcon class="size-4 text-stone-700" />
 					{/if}
 				</button>
 
-				<!-- Bagikan / Salin Tautan -->
+				<!-- Bagikan -->
 				<Button
 					variant="outline"
 					size="sm"
 					onclick={copyGuideLink}
-					class="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg border-border/80 text-xs font-medium text-foreground hover:bg-muted active:scale-95 shrink-0"
+					class="gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg border-border/80 text-xs font-medium text-foreground hover:bg-muted active:scale-95 shrink-0"
 					title="Salin tautan hasil panduan"
 				>
 					<Share2Icon class="size-3.5 text-muted-foreground" />
 					<span class="hidden sm:inline">Bagikan</span>
 				</Button>
 
-				<!-- Cetak / PDF (Hidden on Mobile) -->
+				<!-- Cetak / PDF -->
 				<Button
 					variant="outline"
 					size="sm"
@@ -337,25 +364,26 @@
 					title="Cetak atau simpan sebagai PDF"
 				>
 					<PrinterIcon class="size-3.5" />
-					<span>Cetak / PDF</span>
+					<span>Cetak</span>
 				</Button>
 
 				<!-- Check Baru -->
 				<Button
 					href="/mulai"
 					size="sm"
-					class="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90 active:scale-95 shadow-none shrink-0"
+					class="gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90 active:scale-95 shadow-none shrink-0"
+					title="Mulai Style Check baru"
 				>
 					<RotateCcwIcon class="size-3.5" />
 					<span class="hidden sm:inline">Check Baru</span>
 				</Button>
 
-				<!-- Hapus Data Button (Icon Only, Hidden on Mobile Header as it is in Drawer) -->
+				<!-- Hapus Data -->
 				<button
 					type="button"
 					onclick={() => (isDeleteDialogOpen = true)}
-					class="hidden sm:inline-flex size-8 sm:size-9 items-center justify-center rounded-lg border border-border/70 text-muted-foreground transition-all hover:text-destructive hover:bg-destructive/10 active:scale-95 shrink-0"
-					title="Hapus data panduan ini"
+					class="inline-flex size-8 sm:size-9 items-center justify-center rounded-lg border border-border/70 text-muted-foreground transition-all hover:text-destructive hover:bg-destructive/10 active:scale-95 shrink-0"
+					title="Hapus data panduan saya"
 				>
 					<Trash2Icon class="size-3.5" />
 				</button>
@@ -363,904 +391,588 @@
 		</div>
 	</header>
 
-	<main class="flex-1 py-4 sm:py-10">
-		<div class="mx-auto max-w-6xl px-3 sm:px-6">
-			<!-- HERO RESULT CARD (Unified, Clean, Mobile-First, Zero Redundancy) -->
-			<div class="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 mb-5 shadow-xs">
-				<!-- Top Row: Badges, Gender & Wardrobe Stat -->
-				<div class="flex items-center justify-between gap-2 mb-3">
-					<div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-						<span class="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-stone-100/80 dark:bg-stone-800/60 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-foreground">
-							<span class="size-1.5 rounded-full bg-emerald-500"></span>
-							<span>Hasil Analisis</span>
-						</span>
-						<span class="rounded-full border border-border/70 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-muted-foreground capitalize">
-							{guide.summary.genderDesc}
-						</span>
-						{#if guide.photoAnalysis}
-							<span class="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-								<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {guide.photoAnalysis.skinHex}"></span>
-								<span>{guide.photoAnalysis.skinHex}</span>
-							</span>
-						{/if}
-					</div>
+	<main class="flex-1 py-5 sm:py-10">
+		<div class="mx-auto max-w-4xl px-3.5 sm:px-6 space-y-6 sm:space-y-12">
 
-					<!-- Status Lemari -->
-					<span class="text-[10px] sm:text-[11px] font-mono font-semibold text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full border border-border/70 shrink-0">
-						Lemari: {ownedCount}/{totalItemsCount} ({ownedPercentage}%)
+			<!-- 1. HERO SUMMARY SECTION (Sederhana, Bersih, Personal) -->
+			<section class="space-y-3.5 sm:space-y-4">
+				<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+					<span class="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-stone-100/90 dark:bg-stone-800/80 px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-foreground shrink-0">
+						<span class="size-1.5 rounded-full bg-emerald-500"></span>
+						<span>Panduan Personal</span>
 					</span>
+					<span class="rounded-full border border-border/70 bg-stone-50 dark:bg-stone-900/50 px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-medium text-muted-foreground capitalize shrink-0">
+						{guide.summary.genderDesc}
+					</span>
+					{#if guide.photoAnalysis}
+						<span class="inline-flex items-center gap-1 rounded-full border border-border/70 bg-stone-50 dark:bg-stone-900/50 px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-mono text-muted-foreground shrink-0">
+							<span class="size-2 sm:size-2.5 rounded-full border border-black/20 shrink-0" style="background-color: {guide.photoAnalysis.skinHex}"></span>
+							<span>{guide.photoAnalysis.skinHex}</span>
+						</span>
+					{/if}
 				</div>
 
-				<!-- Headline & Subheadline -->
-				<h1 class="font-serif text-xl sm:text-3xl lg:text-4xl font-normal text-foreground tracking-tight leading-snug">
+				<h1 class="font-serif text-2xl sm:text-4xl lg:text-5xl font-normal text-foreground tracking-tight leading-tight">
 					{guide.summary.headline}
 				</h1>
-				<p class="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed font-normal">
+				<p class="text-xs sm:text-base text-muted-foreground max-w-2xl leading-relaxed font-normal">
 					{guide.summary.subheadline}
 				</p>
 
-				<!-- Undertone Switcher Segmented Control & Swatches Bar -->
-				<div class="mt-4 pt-3.5 border-t border-border/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
-					<!-- Segmented Undertone Control -->
-					<div class="flex items-center gap-2">
-						<span class="text-xs font-semibold text-foreground shrink-0">Tone Kulit:</span>
-						<div class="inline-flex items-center gap-1 p-1 rounded-xl border border-border/80 bg-stone-100 dark:bg-stone-800/80 w-full sm:w-auto">
-							<button
-								type="button"
-								onclick={() => (activeUndertone = "hangat")}
-								class="flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs transition-all {activeUndertone === 'hangat' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
-							>
-								☀️ Warm
-							</button>
-							<button
-								type="button"
-								onclick={() => (activeUndertone = "dingin")}
-								class="flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs transition-all {activeUndertone === 'dingin' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
-							>
-								❄️ Cool
-							</button>
-							<button
-								type="button"
-								onclick={() => (activeUndertone = "netral")}
-								class="flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs transition-all {activeUndertone === 'netral' ? 'bg-background text-foreground font-bold shadow-2xs border border-border/60' : 'text-stone-700 dark:text-stone-300 hover:text-foreground font-medium'}"
-							>
-								⚖️ Neutral
-							</button>
-						</div>
-					</div>
-
-					<!-- 6 Palet Swatches Strip -->
-					<div class="flex items-center gap-1.5 flex-wrap">
-						<span class="text-[11px] text-muted-foreground font-medium mr-0.5">Palet:</span>
-						{#each guide.palette.baseColors.slice(0, 4) as col}
-							<span class="inline-flex items-center gap-1 rounded-full border border-border/80 bg-stone-50 dark:bg-stone-900/60 px-2 py-0.5 text-[10px] text-foreground font-medium shadow-2xs" title="{col.name}: {col.hex}">
-								<span class="size-2.5 rounded-full border border-black/15 shrink-0" style="background-color: {col.hex}"></span>
-								<span>{col.name}</span>
-							</span>
-						{/each}
-						{#each guide.palette.accentColors.slice(0, 2) as col}
-							<span class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-[10px] text-primary font-semibold shadow-2xs" title="Aksen: {col.name}">
-								<span class="size-2.5 rounded-full border border-black/15 shrink-0" style="background-color: {col.hex}"></span>
-								<span>{col.name}</span>
-							</span>
-						{/each}
-					</div>
-				</div>
-			</div>
-
-			{#snippet sidebarContent(isMobile = false)}
-				<!-- Desktop Sidebar Card: Profil & Undertone Switcher -->
-				<div class="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-2xs">
-					<div class="flex items-center justify-between">
-						<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Profil Analisis</span>
-						<span class="rounded border border-border/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">
-							{guide.summary.genderDesc}
-						</span>
-					</div>
-					<div class="flex items-center gap-2.5">
-						<div class="flex size-9 items-center justify-center rounded-lg border border-border bg-stone-50 dark:bg-stone-800 text-foreground shrink-0 shadow-2xs">
-							<PaletteIcon class="size-4" />
-						</div>
-						<div class="min-w-0 flex-1">
-							<div class="text-xs font-semibold text-foreground leading-tight truncate">Undertone {guide.palette.undertone}</div>
-							<div class="text-[10px] text-muted-foreground truncate">{guide.palette.name}</div>
-						</div>
-					</div>
-
-					<div class="pt-2 border-t border-border/60">
-						<div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5 font-medium">
-							<span>Ganti Tone Kulit:</span>
-							<span class="text-[9px] uppercase tracking-wider font-semibold text-foreground">Reaktif</span>
-						</div>
-						<div class="grid grid-cols-3 gap-1">
-							<button
-								type="button"
-								onclick={() => (activeUndertone = "hangat")}
-								class="py-1.5 px-1 rounded-md text-[10px] font-medium transition-all text-center {activeUndertone === 'hangat' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
-							>
-								☀️ Warm
-							</button>
-							<button
-								type="button"
-								onclick={() => (activeUndertone = "dingin")}
-								class="py-1.5 px-1 rounded-md text-[10px] font-medium transition-all text-center {activeUndertone === 'dingin' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
-							>
-								❄️ Cool
-							</button>
-							<button
-								type="button"
-								onclick={() => (activeUndertone = "netral")}
-								class="py-1.5 px-1 rounded-md text-[10px] font-medium transition-all text-center {activeUndertone === 'netral' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-foreground'}"
-							>
-								⚖️ Neutral
-							</button>
-						</div>
-					</div>
-
-					<div class="pt-2 border-t border-border/60">
-						<div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5 font-medium">
-							<span>Palet Rekomendasi</span>
-							<span class="text-[9px] uppercase tracking-wider text-muted-foreground">6 Warna</span>
-						</div>
-						<div class="flex items-center gap-1.5">
-							{#each guide.palette.baseColors.slice(0, 4) as col}
-								<span class="size-4 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}" title={col.name}></span>
-							{/each}
-							{#each guide.palette.accentColors.slice(0, 2) as col}
-								<span class="size-4 rounded-full border border-black/10 shadow-2xs shrink-0" style="background-color: {col.hex}" title="Aksen: {col.name}"></span>
-							{/each}
-						</div>
-					</div>
-				</div>
-
-				<!-- Navigasi Menu Sidebar -->
-				<div class="rounded-xl border border-border/80 bg-card p-1.5 space-y-0.5 shadow-2xs">
-					<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 py-1.5 block">
-						Bagian Panduan
-					</span>
-					<button
-						type="button"
-						onclick={() => { activeGuideTab = "outfit"; if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'outfit' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-					>
-						<div class="flex items-center gap-2.5">
-							<CompassIcon class="size-3.5" />
-							<span>Katalog Outfit & Warna</span>
-						</div>
-						<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'outfit' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
-							{guide.outfits.length}
-						</span>
-					</button>
-
-					<button
-						type="button"
-						onclick={() => { activeGuideTab = "wardrobe"; if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'wardrobe' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-					>
-						<div class="flex items-center gap-2.5">
-							<ShirtIcon class="size-3.5" />
-							<span>Wardrobe Inti</span>
-						</div>
-						<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'wardrobe' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
-							{guide.capsule?.length || 12}
-						</span>
-					</button>
-
-					<button
-						type="button"
-						onclick={() => { activeGuideTab = "belanja"; if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'belanja' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-					>
-						<div class="flex items-center gap-2.5">
-							<ShoppingBagIcon class="size-3.5" />
-							<span>Daftar Belanja</span>
-						</div>
-						<span class="text-[10px] py-0.5 px-1.5 rounded font-mono font-medium border {activeGuideTab === 'belanja' ? 'border-stone-700 dark:border-stone-300' : 'border-border/80'}">
-							{ownedCount}/{totalItemsCount}
-						</span>
-					</button>
-
-					<button
-						type="button"
-						onclick={() => { activeGuideTab = "warna"; if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'warna' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-					>
-						<div class="flex items-center gap-2.5">
-							<PaletteIcon class="size-3.5" />
-							<span>Detail Warna Personal</span>
-						</div>
-					</button>
-
-					<button
-						type="button"
-						onclick={() => { activeGuideTab = "ringkasan"; if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all {activeGuideTab === 'ringkasan' ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-foreground'}"
-					>
-						<div class="flex items-center gap-2.5">
-							<InfoIcon class="size-3.5" />
-							<span>Ringkasan & Aturan Gaya</span>
-						</div>
-					</button>
-				</div>
-
-				<!-- Progres Koleksi Lemari -->
-				<div class="rounded-xl border border-border/80 bg-card p-4 space-y-2.5 shadow-2xs">
-					<div class="flex items-center justify-between text-xs">
-						<span class="font-medium text-foreground">Progres Koleksi</span>
-						<span class="font-mono text-muted-foreground">{ownedCount}/{totalItemsCount}</span>
-					</div>
-					<Progress value={ownedPercentage} class="h-1.5 bg-stone-100 dark:bg-stone-800" />
-					<p class="text-[11px] text-muted-foreground leading-relaxed font-normal">
-						{ownedPercentage}% dari {totalItemsCount} item inti sudah kamu miliki di lemari.
-					</p>
-				</div>
-
-				<!-- Quick Actions -->
-				<div class="rounded-xl border border-border/80 bg-card p-2.5 space-y-1.5 shadow-2xs">
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => { copyGuideLink(); if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full justify-start gap-2 rounded-lg text-xs font-medium border-border/80 text-foreground hover:bg-muted"
-					>
-						<Share2Icon class="size-3.5 text-muted-foreground" />
-						<span>Salin Link Panduan</span>
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => { handlePrint(); if (isMobile) isMobileSidebarOpen = false; }}
-						class="w-full justify-start gap-2 rounded-lg text-xs font-medium border-border/80 text-foreground hover:bg-muted"
-					>
-						<PrinterIcon class="size-3.5 text-muted-foreground" />
-						<span>Cetak / Simpan PDF</span>
-					</Button>
-					{#if isMobile}
-						<Button
-							href="/mulai"
-							size="sm"
-							class="w-full justify-start gap-2 rounded-lg text-xs font-medium bg-foreground text-background hover:opacity-90"
-						>
-							<RotateCcwIcon class="size-3.5" />
-							<span>Check Baru</span>
-						</Button>
-					{/if}
-				</div>
-			{/snippet}
-
-			<!-- TABS UTAMA 5 BAGIAN (STICKY TABS DI ATAS) -->
-			<Tabs.Root bind:value={activeGuideTab} class="w-full">
-				<!-- STICKY MOBILE NAVIGATION BAR (horizontal scrollable) -->
-				<div class="sticky top-14 sm:top-16 z-30 -mx-3 px-3 py-2 bg-background/95 backdrop-blur-md border-b border-border/70 mb-5 flex items-center gap-1.5 overflow-x-auto touch-pan-x scrollbar-none no-print">
-					<Tabs.List class="flex w-full h-auto p-1 bg-stone-100/70 dark:bg-stone-900/60 rounded-xl gap-1 border border-border/70">
-						<Tabs.Trigger value="outfit" class="flex-1 shrink-0 gap-1.5 py-2 px-2.5 text-xs font-semibold rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap text-center">
-							<CompassIcon class="size-3.5 inline mr-1" />
-							<span>Outfit Look ({guide.outfits.length})</span>
-						</Tabs.Trigger>
-						<Tabs.Trigger value="wardrobe" class="flex-1 shrink-0 gap-1.5 py-2 px-2.5 text-xs font-semibold rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap text-center">
-							<ShirtIcon class="size-3.5 inline mr-1" />
-							<span>Wardrobe ({guide.capsule?.length || 12})</span>
-						</Tabs.Trigger>
-						<Tabs.Trigger value="belanja" class="flex-1 shrink-0 gap-1.5 py-2 px-2.5 text-xs font-semibold rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap text-center">
-							<ShoppingBagIcon class="size-3.5 inline mr-1" />
-							<span>Belanja ({ownedCount})</span>
-						</Tabs.Trigger>
-						<Tabs.Trigger value="warna" class="shrink-0 gap-1.5 py-2 px-2.5 text-xs font-semibold rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<PaletteIcon class="size-3.5 inline mr-1" />
-							<span>Warna Kulit</span>
-						</Tabs.Trigger>
-						<Tabs.Trigger value="ringkasan" class="shrink-0 gap-1.5 py-2 px-2.5 text-xs font-semibold rounded-lg transition-all data-[state=active]:bg-stone-900 data-[state=active]:text-stone-50 dark:data-[state=active]:bg-stone-100 dark:data-[state=active]:text-stone-900 whitespace-nowrap">
-							<InfoIcon class="size-3.5 inline mr-1" />
-							<span>Aturan Gaya</span>
-						</Tabs.Trigger>
-					</Tabs.List>
-				</div>
-
-				<!-- LAYOUT: DESKTOP SIDEBAR + CONTENT -->
-				<div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-					<!-- DESKTOP STICKY SIDEBAR -->
-					<aside class="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start no-print">
-						{@render sidebarContent(false)}
-					</aside>
-
-					<!-- MAIN CONTENT AREA -->
-					<div class="lg:col-span-9 space-y-6 min-w-0">
-
-				<!-- 1. TAB OUTFIT & WARNA (THE MAIN ATTRACTION - LANGSUNG MENAMPILKAN LOOKBOOK) -->
-				<Tabs.Content value="outfit" class="space-y-5">
-					<!-- Filter Situasi dengan Scroll Horizontal di Mobile -->
-					<div class="flex items-center gap-1.5 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-none flex-nowrap sm:flex-wrap border-b border-border/70 no-print">
-						{#each occasionFilters as f}
-							{@const count = f.id === "semua" ? guide.outfits.length : guide.outfits.filter(o => o.occasion === f.id).length}
-							<button
-								type="button"
-								onclick={() => (selectedOccasion = f.id)}
-								class="rounded-full px-3 py-1.5 text-xs transition-all whitespace-nowrap shrink-0 {selectedOccasion === f.id ? 'bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 font-bold shadow-2xs' : 'bg-stone-100/80 dark:bg-stone-800/60 text-muted-foreground hover:text-foreground font-medium'}"
-							>
-								<span>{f.label}</span>
-								<span class="ml-1 text-[10px] opacity-75 font-mono">({count})</span>
-							</button>
-						{/each}
-					</div>
-
-					{#if filteredOutfits.length === 0}
-						<div class="rounded-xl border border-dashed border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-12 text-center">
-							<ShirtIcon class="mx-auto size-10 text-muted-foreground/40 mb-3" />
-							<p class="text-sm font-semibold text-foreground">Tidak ada look yang sesuai dengan filter.</p>
-							<p class="text-xs text-muted-foreground mt-1">Silakan pilih kategori situasi lain di atas.</p>
-						</div>
-					{:else}
-						<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-							{#each paginatedOutfits as outfit, idx (outfit.id)}
-								{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
-								<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl group shadow-2xs">
-									<div>
-										{#if currentImage}
-											<div class="relative h-52 sm:h-64 w-full overflow-hidden bg-stone-50 dark:bg-stone-900/40 border-b border-border/70">
-												<img
-													src={currentImage}
-													alt={outfit.name}
-													class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102"
-													loading="lazy"
-												/>
-
-												<!-- Badges di atas gambar -->
-												<div class="absolute top-2.5 left-2.5">
-													<span class="rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-														{outfit.occasionLabel}
-													</span>
-												</div>
-
-												<div class="absolute top-2.5 right-2.5">
-													<span class="rounded border border-border/80 bg-background/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground">
-														#{(outfitPage - 1) * outfitsPerPage + idx + 1}
-													</span>
-												</div>
-
-												{#if aiImages[outfit.id]}
-													<span class="absolute bottom-2.5 left-2.5 rounded-full border border-border/80 bg-background/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-foreground shadow-2xs">
-														Visualisasi Terpasang
-													</span>
-												{/if}
-											</div>
-										{/if}
-
-										<CardHeader class="p-3.5 sm:p-5 pb-2">
-											<div class="flex items-start justify-between gap-2">
-												<CardTitle class="font-serif text-base sm:text-lg font-normal text-foreground">
-													{outfit.name}
-												</CardTitle>
-
-												<!-- Tombol AI Virtual Try-On -->
-												<button
-													type="button"
-													onclick={() => triggerTryOn(outfit.id)}
-													disabled={isGeneratingOutfitId === outfit.id}
-													class="inline-flex shrink-0 items-center gap-1 sm:gap-1.5 rounded-full border border-border/80 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 px-2.5 sm:px-3 py-1 text-[11px] font-medium text-foreground transition active:scale-95 disabled:opacity-50"
-													title="Simulasi visual foto look dikenakan"
-												>
-													{#if isGeneratingOutfitId === outfit.id}
-														<Loader2Icon class="size-3 animate-spin text-muted-foreground" />
-														<span>Merender...</span>
-													{:else}
-														<CameraIcon class="size-3 text-muted-foreground" />
-														<span class="hidden sm:inline">{aiImages[outfit.id] ? "Simulasi Ulang" : "Simulasi Dipakai"}</span>
-														<span class="sm:hidden">{aiImages[outfit.id] ? "Ulang" : "AI Try-On"}</span>
-													{/if}
-												</button>
-											</div>
-
-											<div class="rounded-lg bg-stone-50/70 dark:bg-stone-900/40 p-2 text-xs font-normal text-foreground mt-2 border border-border/50">
-												{outfit.formula}
-											</div>
-										</CardHeader>
-
-										<CardContent class="p-3.5 sm:p-5 pt-1 space-y-3">
-											<div>
-												<span class="text-[10px] font-semibold uppercase text-muted-foreground tracking-wider block mb-2">
-													Item Produk & Link Shopee:
-												</span>
-												<ul class="space-y-2">
-													{#if outfit.items}
-														{#each outfit.items as it}
-															<li class="flex items-center justify-between gap-2 sm:gap-2.5 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-2 sm:p-2.5 text-xs transition-colors hover:bg-stone-100/60 dark:hover:bg-stone-800/50">
-																<div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
-																	<!-- Thumbnail Foto Produk Pakaian -->
-																	<div class="size-11 sm:size-12 rounded-lg border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
-																		<img
-																			src={it.imageUrl || `/images/real/items/${it.id.startsWith("outer-1") ? "blazer" : it.id.startsWith("outer-2") ? "cardigan" : it.id.startsWith("top-1") ? "shirt" : it.id.startsWith("top-2") ? "blouse" : it.id.startsWith("top-3") ? "tshirt" : it.id.startsWith("top-4") ? "knitwear" : it.id.startsWith("bottom-1") ? "trousers" : it.id.startsWith("bottom-2") ? "denim" : it.id.startsWith("bottom-3") ? "chinos" : it.id.startsWith("shoes-1") ? "sneakers" : it.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
-																			alt={it.name}
-																			class="size-full object-cover transition-transform duration-300 hover:scale-105"
-																			loading="lazy"
-																		/>
-																	</div>
-																	<div class="min-w-0 flex-1">
-																		<div class="flex items-center gap-1.5 flex-wrap">
-																			<span class="font-medium text-foreground text-xs leading-snug line-clamp-1">{it.name}</span>
-																			<span class="rounded bg-muted px-1.5 py-0.2 text-[9px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
-																				{it.category}
-																			</span>
-																		</div>
-																		<!-- Rekomendasi Warna & Harga -->
-																		<div class="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap text-[11px]">
-																			<span class="inline-flex items-center gap-1 text-muted-foreground font-normal">
-																				<span class="size-2 rounded-full border border-black/20 shrink-0" style="background-color: {getColorHex(it.color)}"></span>
-																				<span class="truncate max-w-[90px] sm:max-w-none">{it.color || 'Netral'}</span>
-																			</span>
-																			{#if it.priceEstimate}
-																				<span class="font-mono text-[9px] sm:text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.2 rounded border border-border/60">
-																					{it.priceEstimate}
-																				</span>
-																			{/if}
-																		</div>
-																	</div>
-																</div>
-
-																{#if it.affiliateUrl}
-																	<a
-																		href={it.affiliateUrl}
-																		target="_blank"
-																		rel="noopener noreferrer nofollow"
-																		class="inline-flex shrink-0 items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold shadow-2xs transition active:scale-95"
-																		title="Beli {it.name} di Shopee"
-																	>
-																		<ShoppingBagIcon class="size-3" />
-																		<span class="hidden sm:inline">Shopee</span>
-																		<span class="sm:hidden">Beli</span>
-																		<ExternalLinkIcon class="size-2.5 opacity-80" />
-																	</a>
-																{/if}
-															</li>
-														{/each}
-													{/if}
-												</ul>
-											</div>
-
-											<div class="rounded-lg border border-border/60 bg-stone-50/30 dark:bg-stone-900/10 p-2.5 sm:p-3 text-xs text-muted-foreground italic leading-relaxed border-l-2 border-l-foreground/30 font-normal">
-												"{outfit.styleTips}"
-											</div>
-										</CardContent>
+				<!-- KARTU HASIL ANALISIS TONE KULIT DARI FOTO -->
+				<div class="pt-2">
+					<div class="rounded-2xl border border-border/80 bg-stone-50/70 dark:bg-stone-900/40 p-3.5 sm:p-5 shadow-2xs">
+						<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+							<div class="flex items-center gap-3 sm:gap-3.5 min-w-0">
+								{#if data.userAnswers?.photoBase64}
+									<div class="size-13 sm:size-14 rounded-xl overflow-hidden border border-border/80 shrink-0 shadow-2xs bg-stone-100 dark:bg-stone-800">
+										<img
+											src={data.userAnswers.photoBase64}
+											alt="Foto Wajah Analisis"
+											class="size-full object-cover"
+										/>
 									</div>
+								{:else}
+									<div class="size-11 sm:size-12 rounded-xl border border-border/80 bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-muted-foreground shrink-0 shadow-2xs">
+										<CameraIcon class="size-5" />
+									</div>
+								{/if}
+								<div class="min-w-0 flex-1">
+									<div class="flex items-center gap-2 flex-wrap">
+										<span class="text-xs sm:text-sm font-bold text-foreground">
+											{colortoneProfiles[userTone]?.title || `Tone ${userTone}`}
+										</span>
+										<span class="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+											<span
+												class="size-2 rounded-full border border-black/20 shrink-0"
+												style="background-color: {guide.photoAnalysis?.skinHex || colortoneProfiles[userTone]?.skinHex}"
+											></span>
+											<span>{guide.photoAnalysis?.skinHex || colortoneProfiles[userTone]?.skinHex}</span>
+										</span>
+									</div>
+									<div class="text-[11px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+										{colortoneProfiles[userTone]?.contrastAdvice}
+									</div>
+								</div>
+							</div>
 
-									<!-- Tombol Belanja Shopee untuk 1 Set Look -->
-									{#if outfit.affiliateUrl}
-										<div class="p-3.5 sm:p-5 pt-0 mt-2">
-											<a
-												href={outfit.affiliateUrl}
-												target="_blank"
-												rel="noopener noreferrer nofollow"
-												class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 px-4 py-2.5 text-xs sm:text-sm font-semibold transition hover:opacity-90 active:scale-98 shadow-sm"
-												title="Beli 1 Set Look di Shopee"
-											>
-												<ShoppingBagIcon class="size-3.5 text-orange-400 dark:text-orange-600" />
-												<span>Beli 1 Set Look di Shopee</span>
-												<ExternalLinkIcon class="size-3 opacity-60" />
-											</a>
-										</div>
-									{/if}
-								</Card>
-							{/each}
+							<!-- Detail Karakteristik Spektrum & Aksesori -->
+							<div class="flex items-center gap-2 sm:gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60 text-[11px] text-muted-foreground shrink-0 flex-wrap sm:flex-nowrap">
+								<div class="rounded-lg bg-background/80 px-2.5 py-1 border border-border/60">
+									<span class="font-semibold text-foreground">Aksesori:</span>
+									<span class="ml-1">{colortoneProfiles[userTone]?.jewelry.split('&')[0].trim()}</span>
+								</div>
+								<div class="rounded-lg bg-background/80 px-2.5 py-1 border border-border/60">
+									<span class="font-semibold text-foreground">Spektrum:</span>
+									<span class="ml-1 capitalize">{userTone} Tone</span>
+								</div>
+							</div>
 						</div>
+					</div>
+				</div>
+			</section>
 
-						<div class="rounded-xl border border-border/80 bg-card p-4 mt-6">
-							<Pagination
-								bind:page={outfitPage}
-								totalItems={filteredOutfits.length}
-								perPage={outfitsPerPage}
-								itemLabel="look outfit"
-								showEdges={true}
-								onPageChange={() => scrollToLookbook()}
-							/>
-						</div>
-					{/if}
-
-					<!-- Disclaimer Afiliasi di Outfit -->
-					<div class="mt-6 rounded-lg border border-border/70 bg-stone-50/40 dark:bg-stone-900/20 p-4 text-xs text-muted-foreground flex items-start gap-3">
-						<InfoIcon class="size-4 shrink-0 mt-0.5 text-muted-foreground" />
-						<p class="leading-relaxed font-normal">
-							{data.affiliateSettings?.affiliate_disclaimer || "Tautan belanja di atas terhubung ke mitra resmi Shopee Affiliate. Membeli melalui tautan ini membantu menjaga layanan reedoing 100% gratis tanpa biaya ekstra untukmu."}
+			<!-- 2. SECTION: PALET WARNA REKOMENDASI -->
+			<section id="section-warna" class="rounded-2xl border border-border/80 bg-card p-4 sm:p-7 shadow-xs space-y-4">
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+					<div>
+						<h2 class="font-serif text-xl sm:text-2xl font-normal text-foreground">Palet Warna Personal</h2>
+						<p class="text-xs sm:text-sm text-muted-foreground mt-0.5">
+							Warna terbaik yang menyatu alami dengan tone kulitmu ({colortoneProfiles[userTone]?.title}).
 						</p>
 					</div>
-				</Tabs.Content>
+					<span class="self-start sm:self-auto shrink-0 rounded-full border border-border/70 bg-stone-50 dark:bg-stone-900/50 px-2.5 py-0.5 text-xs font-semibold text-foreground capitalize">
+						Undertone {guide.palette.undertone}
+					</span>
+				</div>
 
-				<!-- 2. TAB WARDROBE INTI (SHOPPING 2-KOLOM MOBILE GRID) -->
-				<Tabs.Content value="wardrobe" class="space-y-5">
-					<div class="flex items-center justify-between gap-3">
-						<div>
-							<h2 class="font-serif text-xl sm:text-2xl font-normal text-foreground">Koleksi 12 Item Esensial</h2>
-							<p class="text-xs sm:text-sm text-muted-foreground mt-0.5 font-normal">
-								Semua item telah dikurasi agar saling cocok satu sama lain.
-							</p>
-						</div>
-						<span class="rounded-full border border-border/80 bg-stone-50 dark:bg-stone-900/50 px-3 py-1 text-xs font-semibold text-muted-foreground shrink-0">
-							12 Item Lengkap
-						</span>
-					</div>
-
-					<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
-						{#each guide.capsule as item (item.id)}
-							<Card class="border-border/80 bg-card overflow-hidden transition-all duration-300 hover:border-foreground/30 flex flex-col justify-between rounded-xl shadow-2xs">
-								<div>
-									<div class="aspect-square sm:aspect-4/3 bg-stone-50 dark:bg-stone-900/40 p-2 sm:p-3 flex items-center justify-center border-b border-border/70 relative overflow-hidden">
-										<img
-											src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
-											alt={item.name}
-											loading="lazy"
-											class="h-full w-full object-cover rounded-lg transition-transform duration-500 hover:scale-105"
-										/>
-										<span class="absolute top-2 left-2 rounded border border-border/80 bg-background/90 backdrop-blur-xs px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-											{item.category}
-										</span>
-										<span class="hidden xs:inline-block absolute top-2 right-2 text-[9px] sm:text-[10px] font-mono text-muted-foreground bg-background/90 backdrop-blur-xs px-1.5 py-0.5 rounded border border-border/80">
-											⭐ {item.versatileScore}/10
-										</span>
-									</div>
-
-									<CardHeader class="p-2.5 sm:p-5 pb-1 sm:pb-2">
-										<div class="flex items-start justify-between gap-1.5 sm:gap-2">
-											<CardTitle class="font-serif text-xs sm:text-base md:text-lg font-semibold text-foreground line-clamp-1 sm:line-clamp-none">
-												{item.name}
-											</CardTitle>
-											{#if item.priceEstimate}
-												<span class="font-mono text-[9px] sm:text-[10px] text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded border border-border/70 shrink-0">
-													{item.priceEstimate}
-												</span>
-											{/if}
-										</div>
-										<div class="flex items-center gap-1.5 pt-1 text-[11px] sm:text-xs text-muted-foreground">
-											<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.color)}"></span>
-											<span class="hidden sm:inline">Warna:</span>
-											<span class="font-medium text-foreground truncate">{item.color}</span>
-										</div>
-									</CardHeader>
-
-									<CardContent class="p-2.5 sm:p-5 pt-1">
-										<div class="rounded-lg bg-stone-50/60 dark:bg-stone-900/30 p-2 sm:p-3 text-[11px] sm:text-xs text-muted-foreground leading-relaxed border border-border/50 font-normal line-clamp-2 sm:line-clamp-none">
-											<span class="font-medium text-foreground block mb-0.5">Fitting:</span>
-											{item.fitTips}
-										</div>
-									</CardContent>
+				<!-- 4 Warna Dasar Netral -->
+				<div class="space-y-2">
+					<span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground block">
+						Warna Dasar Netral (70–80% Porsi Pakaian)
+					</span>
+					<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+						{#each guide.palette.baseColors as col}
+							<div class="rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-2 sm:p-3 flex items-center gap-2 sm:gap-2.5 shadow-2xs min-w-0">
+								<span class="size-7 sm:size-8 rounded-lg border border-black/15 shrink-0 shadow-2xs" style="background-color: {col.hex}"></span>
+								<div class="min-w-0 flex-1">
+									<div class="text-xs font-semibold text-foreground truncate">{col.name}</div>
+									<div class="text-[10px] font-mono text-muted-foreground uppercase">{col.hex}</div>
 								</div>
-
-								<div class="border-t border-border/60 p-2 sm:p-3.5 bg-stone-50/40 dark:bg-stone-900/20 flex flex-col gap-2">
-									<div class="hidden sm:flex flex-wrap gap-1 text-[10px] text-muted-foreground">
-										{#each item.occasions as occ}
-											<span class="rounded bg-background px-2 py-0.5 border border-border/70 capitalize font-normal text-[10px]">
-												{occ}
-											</span>
-										{/each}
-									</div>
-
-									{#if item.affiliateUrl}
-										<a
-											href={item.affiliateUrl}
-											target="_blank"
-											rel="noopener noreferrer nofollow"
-											class="inline-flex w-full items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-2 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
-											title="Beli {item.name} di Shopee"
-										>
-											<ShoppingBagIcon class="size-3" />
-											<span class="hidden sm:inline">Beli di Shopee</span>
-											<span class="sm:hidden">Shopee</span>
-											<ExternalLinkIcon class="size-2.5 opacity-80" />
-										</a>
-									{/if}
-								</div>
-							</Card>
+							</div>
 						{/each}
 					</div>
-				</Tabs.Content>
+				</div>
 
-				<!-- 3. TAB DAFTAR BELANJA PRIORITAS -->
-				<Tabs.Content value="belanja" class="space-y-6">
-					<div class="rounded-xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs">
-						<div class="flex items-center justify-between gap-3 border-b border-border/70 pb-4">
-							<div>
-								<h2 class="font-serif text-xl sm:text-2xl font-normal text-foreground">Daftar Belanja Prioritas</h2>
-								<p class="text-xs sm:text-sm text-muted-foreground mt-0.5 font-normal">
-									Centang item yang sudah kamu miliki di lemari.
-								</p>
+				<!-- 2 Warna Aksen Pemikat -->
+				<div class="space-y-2 pt-1">
+					<span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground block">
+						Warna Aksen Pemikat (15–20% Porsi Pakaian)
+					</span>
+					<div class="grid grid-cols-2 gap-2 sm:gap-3">
+						{#each guide.palette.accentColors as col}
+							<div class="rounded-xl border border-primary/30 bg-primary/5 p-2 sm:p-3 flex items-center gap-2 sm:gap-2.5 shadow-2xs min-w-0">
+								<span class="size-7 sm:size-8 rounded-lg border border-black/15 shrink-0 shadow-2xs" style="background-color: {col.hex}"></span>
+								<div class="min-w-0 flex-1">
+									<div class="text-xs font-semibold text-foreground truncate">{col.name}</div>
+									<div class="text-[10px] font-mono text-muted-foreground uppercase">{col.hex}</div>
+								</div>
 							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={handlePrint}
-								class="hidden sm:inline-flex gap-1.5 font-medium text-xs rounded-lg border-border/80"
+						{/each}
+					</div>
+				</div>
+
+				<!-- Warna yang Perlu Dihindari -->
+				{#if guide.palette.avoidColors?.length}
+					<div class="pt-2.5 border-t border-border/50 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+						<span class="text-destructive font-semibold text-[11px] sm:text-xs shrink-0">✕ Hindari:</span>
+						{#each guide.palette.avoidColors as col}
+							<span class="inline-flex items-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/5 px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs text-foreground shrink-0">
+								<span class="size-2 rounded-full border border-black/20 shrink-0" style="background-color: {col.hex}"></span>
+								<span>{col.name}</span>
+							</span>
+						{/each}
+					</div>
+				{/if}
+			</section>
+
+			<!-- 3. SECTION: INSPIRASI LOOK & OUTFIT -->
+			<section id="section-lookbook" class="space-y-4 sm:space-y-5">
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
+					<div>
+						<h2 class="font-serif text-2xl sm:text-3xl font-normal text-foreground">Inspirasi Look Outfit</h2>
+						<p class="text-xs sm:text-sm text-muted-foreground mt-0.5">
+							Paduan busana siap pakai yang dirancang sesuai bentuk tubuh dan palet warnamu.
+						</p>
+					</div>
+
+					<!-- Filter Situasi Minimalis (Dropdown Bersih & Responsif di Semua Layar HP) -->
+					<div class="flex items-center gap-2 self-start sm:self-auto shrink-0">
+						<label for="occasion-filter" class="text-xs text-muted-foreground font-medium shrink-0">
+							Kategori:
+						</label>
+						<div class="relative">
+							<select
+								id="occasion-filter"
+								bind:value={selectedOccasion}
+								onchange={() => (outfitPage = 1)}
+								class="appearance-none rounded-xl border border-border/80 bg-stone-100/90 dark:bg-stone-800/90 pl-3 pr-8 py-1.5 text-xs font-semibold text-foreground hover:bg-stone-200/80 dark:hover:bg-stone-700/80 transition-all cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-foreground shadow-2xs"
 							>
-								<PrinterIcon class="size-3.5" />
-								<span>Cetak / PDF</span>
-							</Button>
+								{#each occasionFilters as f}
+									<option value={f.id}>
+										{f.label} ({getOccasionCount(f.id)})
+									</option>
+								{/each}
+							</select>
+							<ChevronDownIcon class="size-3.5 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
 						</div>
+					</div>
+				</div>
 
-						<!-- Progress Bar Kesiapan -->
-						<div class="mt-4 rounded-lg border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-3 sm:p-4">
-							<div class="flex items-center justify-between text-xs font-medium text-foreground mb-1.5">
-								<span>Kesiapan Capsule Wardrobe:</span>
-								<span class="font-mono text-muted-foreground">{ownedCount} dari {totalItemsCount} Item ({ownedPercentage}%)</span>
-							</div>
-							<Progress value={ownedPercentage} class="h-2 w-full bg-stone-100 dark:bg-stone-800" />
+				<!-- Grid Kartu Lookbook atau Empty State -->
+				{#if paginatedOutfits.length === 0}
+					<div class="rounded-2xl border border-dashed border-border/80 bg-card p-8 sm:p-10 text-center space-y-3">
+						<div class="flex size-12 mx-auto items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-800 text-muted-foreground">
+							<SparklesIcon class="size-6" />
 						</div>
-
-						<!-- Daftar Checklist Belanja (Responsive Product Cards) -->
-						<div class="mt-5 space-y-3">
-							{#each guide.shopping as item (item.id)}
-								{@const isChecked = Boolean(shoppingChecks[item.id])}
-								<div class="rounded-xl border border-border/70 bg-card p-3 sm:p-4 transition-all hover:border-foreground/20 space-y-2.5 shadow-2xs {isChecked ? 'opacity-50 bg-stone-50/50 dark:bg-stone-900/20' : ''}">
-									<div class="flex items-start gap-2.5 sm:gap-3 min-w-0">
-										<!-- Checkbox with larger tap target -->
-										<button
-											type="button"
-											onclick={() => handleToggleCheck(item.id)}
-											class="flex size-6 shrink-0 items-center justify-center rounded-md border transition-all mt-0.5 {isChecked ? 'border-foreground bg-foreground text-background' : 'border-border/80 bg-background hover:border-foreground/50'}"
-											aria-label="Centang kepemilikan item {item.name}"
-										>
-											{#if isChecked}
-												<CheckIcon class="size-4 stroke-[2.5]" />
-											{/if}
-										</button>
-
-										<!-- Foto Thumbnail Item Belanja -->
-										<div class="size-11 sm:size-13 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
-											<img
-												src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
-												alt={item.name}
-												class="size-full object-cover transition-transform duration-300 hover:scale-105"
-												loading="lazy"
-											/>
-										</div>
-
-										<div class="flex-1 min-w-0">
-											<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-												<span class="font-serif text-sm sm:text-base font-medium {isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}">
-													{item.name}
-												</span>
-												<span class="rounded border border-border/80 px-1.5 py-0.2 text-[9px] sm:text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-													Prioritas {item.priority}
-												</span>
-												<span class="inline-flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground font-normal">
-													<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.colorSuggestion)}"></span>
-													<span>Warna: <strong class="font-semibold text-foreground">{item.colorSuggestion}</strong></span>
-												</span>
-												{#if item.priceEstimate}
-													<span class="text-[10px] sm:text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800 px-1.5 py-0.2 rounded border border-border/70">
-														{item.priceEstimate}
-													</span>
-												{/if}
-											</div>
-
-											<p class="text-xs text-muted-foreground mt-1 leading-relaxed font-normal">
-												{item.reason}
-											</p>
-										</div>
+						<div>
+							<h3 class="font-serif text-base sm:text-lg font-semibold text-foreground">Belum ada look untuk kategori ini</h3>
+							<p class="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+								Kamu bisa menjelajahi kategori look lainnya seperti Kerja Kantor, Kuliah, atau Semua Look.
+							</p>
+						</div>
+						<button
+							type="button"
+							onclick={() => selectOccasion("semua")}
+							class="inline-flex items-center gap-1.5 rounded-xl bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 px-4 py-2 text-xs font-semibold hover:opacity-90 transition active:scale-95 shadow-xs"
+						>
+							<SparklesIcon class="size-3.5" />
+							<span>Tampilkan Semua Look</span>
+						</button>
+					</div>
+				{:else}
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+						{#each paginatedOutfits as outfit, idx (outfit.id)}
+							{@const currentImage = aiImages[outfit.id] || outfit.imageUrl || `/images/real/looks/${outfit.id}.jpg`}
+							<div class="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs flex flex-col justify-between transition-all hover:border-foreground/20">
+								<div>
+									<!-- Foto Lookbook -->
+									<div class="relative h-60 sm:h-72 w-full overflow-hidden bg-stone-100 dark:bg-stone-800 border-b border-border/70">
+										<img
+											src={currentImage}
+											alt={outfit.name}
+											class="h-full w-full object-cover transition-transform duration-500 hover:scale-102"
+											loading="lazy"
+										/>
+										<span class="absolute top-2.5 left-2.5 rounded-lg border border-border/80 bg-background/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shadow-2xs">
+											{outfit.occasionLabel}
+										</span>
+										<span class="absolute top-2.5 right-2.5 rounded-lg border border-border/80 bg-background/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground shadow-2xs">
+											#{(outfitPage - 1) * outfitsPerPage + idx + 1}
+										</span>
+										{#if aiImages[outfit.id]}
+											<span class="absolute bottom-2.5 left-2.5 rounded-full border border-border/80 bg-background/95 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-semibold text-foreground shadow-2xs">
+												✨ Visualisasi AI Terpasang
+											</span>
+										{/if}
 									</div>
 
-									<!-- Action: Look Count & Beli Button -->
-									<div class="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
-										<span class="text-[11px] font-mono text-muted-foreground bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded border border-border/60">
-											Dipakai di {item.outfitCount} Look
-										</span>
+									<!-- Info Lookbook -->
+									<div class="p-3.5 sm:p-5 space-y-3">
+										<div class="flex items-start justify-between gap-2">
+											<h3 class="min-w-0 flex-1 font-serif text-base sm:text-lg font-semibold text-foreground leading-snug">
+												{outfit.name}
+											</h3>
 
-										{#if item.affiliateUrl}
-											<a
-												href={item.affiliateUrl}
-												target="_blank"
-												rel="noopener noreferrer nofollow"
-												class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-600 px-3 py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
-												title="Beli {item.name} di Shopee"
+											<!-- AI Virtual Try-On Button -->
+											<button
+												type="button"
+												onclick={() => handleTryOnClick(outfit.id)}
+												disabled={isGeneratingOutfitId === outfit.id}
+												class="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/80 bg-background hover:bg-stone-100 dark:hover:bg-stone-800 px-2.5 py-1 text-[11px] sm:text-xs font-medium text-foreground transition active:scale-95 disabled:opacity-50"
+												title="Simulasi AI foto look saat dikenakan (disarankan dengan foto wajah)"
 											>
-												<ShoppingBagIcon class="size-3" />
-												<span>Beli di Shopee</span>
-												<ExternalLinkIcon class="size-2.5 opacity-80" />
-											</a>
+												{#if isGeneratingOutfitId === outfit.id}
+													<Loader2Icon class="size-3 animate-spin text-muted-foreground" />
+													<span>Merender...</span>
+												{:else}
+													<CameraIcon class="size-3 text-muted-foreground" />
+													<span>{aiImages[outfit.id] ? "Simulasi Ulang" : "AI Try-On"}</span>
+												{/if}
+											</button>
+										</div>
+
+										<div class="rounded-xl bg-stone-50/80 dark:bg-stone-900/50 p-2 sm:p-2.5 text-xs text-foreground border border-border/50">
+											<span class="font-semibold text-muted-foreground block text-[10px] uppercase tracking-wider mb-0.5">Formula:</span>
+											<p class="leading-relaxed">{outfit.formula}</p>
+										</div>
+
+										<!-- Style Tip Singkat -->
+										<p class="text-xs text-muted-foreground italic leading-relaxed">
+											"{outfit.styleTips}"
+										</p>
+
+										<!-- DAFTAR ITEM DENGAN TOMBOL BELANJA INDIVIDUAL -->
+										<div class="pt-2 border-t border-border/50 space-y-2">
+											<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block">
+												Item Produk & Rekomendasi:
+											</span>
+											<ul class="space-y-1.5 sm:space-y-2">
+												{#each outfit.items as it}
+													<li class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-2 sm:p-2.5 text-xs transition-colors hover:bg-stone-100/60 dark:hover:bg-stone-800/50">
+														<div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+															<div class="size-9 sm:size-10 rounded-lg border border-border/80 bg-background overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+																<img
+																	src={it.imageUrl || `/images/real/items/${it.id.startsWith("outer-1") ? "blazer" : it.id.startsWith("outer-2") ? "cardigan" : it.id.startsWith("top-1") ? "shirt" : it.id.startsWith("top-2") ? "blouse" : it.id.startsWith("top-3") ? "tshirt" : it.id.startsWith("top-4") ? "knitwear" : it.id.startsWith("bottom-1") ? "trousers" : it.id.startsWith("bottom-2") ? "denim" : it.id.startsWith("bottom-3") ? "chinos" : it.id.startsWith("shoes-1") ? "sneakers" : it.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
+																	alt={it.name}
+																	class="size-full object-cover"
+																	loading="lazy"
+																/>
+															</div>
+															<div class="min-w-0 flex-1">
+																<div class="flex items-center gap-1.5 min-w-0">
+																	<span class="font-medium text-foreground text-xs leading-snug truncate">{it.name}</span>
+																	<span class="rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+																		{it.category}
+																	</span>
+																</div>
+																<div class="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground truncate">
+																	<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(it.color)}"></span>
+																	<span class="truncate">{it.color || 'Netral'}</span>
+																	{#if it.priceEstimate}
+																		<span class="font-mono text-[10px] text-muted-foreground shrink-0">
+																			• {it.priceEstimate}
+																		</span>
+																	{/if}
+																</div>
+															</div>
+														</div>
+
+														<!-- Tombol Beli Per Item -->
+														{#if it.affiliateUrl}
+															<a
+																href={it.affiliateUrl}
+																target="_blank"
+																rel="noopener noreferrer nofollow"
+																class="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 hover:opacity-90 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold shadow-2xs transition active:scale-95"
+																title="Beli {it.name}"
+															>
+																<ShoppingBagIcon class="size-3 shrink-0" />
+																<span>Beli</span>
+															</a>
+														{/if}
+													</li>
+												{/each}
+											</ul>
+										</div>
+									</div>
+								</div>
+
+								<!-- TOMBOL UTAMA: BELI 1 SET LOOK -->
+								{#if outfit.affiliateUrl}
+									<div class="p-3.5 sm:p-5 pt-0">
+										<a
+											href={outfit.affiliateUrl}
+											target="_blank"
+											rel="noopener noreferrer nofollow"
+											class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 hover:opacity-90 px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold shadow-xs transition-all active:scale-98 tracking-wide"
+											title="Dapatkan 1 Set Lengkap"
+										>
+											<ShoppingBagIcon class="size-4 shrink-0" />
+											<span>Dapatkan 1 Set Lengkap</span>
+										</a>
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/if}
+
+				<!-- Pagination Lookbook (Hanya jika look melebihi 1 halaman) -->
+				{#if filteredOutfits.length > outfitsPerPage}
+					<div class="rounded-2xl border border-border/80 bg-card p-3 sm:p-4 mt-4 sm:mt-6">
+						<Pagination
+							bind:page={outfitPage}
+							totalItems={filteredOutfits.length}
+							perPage={outfitsPerPage}
+							itemLabel="look"
+							showEdges={true}
+							onPageChange={() => scrollToSection("section-lookbook")}
+						/>
+					</div>
+				{/if}
+			</section>
+
+			<!-- 4. SECTION: 12 ITEM CAPSULE WARDROBE -->
+			<section id="section-wardrobe" class="space-y-4 sm:space-y-5">
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 border-b border-border/60 pb-3">
+					<div>
+						<h2 class="font-serif text-2xl sm:text-3xl font-normal text-foreground">12 Item Esensial Lemari</h2>
+						<p class="text-xs sm:text-sm text-muted-foreground mt-0.5">
+							Pondasi capsule wardrobe serbaguna yang dapat saling dipadukan untuk puluhan variasi gaya.
+						</p>
+					</div>
+					<span class="self-start sm:self-auto shrink-0 rounded-full border border-border/80 bg-stone-50 dark:bg-stone-900/50 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+						12 Item Lengkap
+					</span>
+				</div>
+
+				<!-- Grid 12 Items: 2 kolom di mobile, 3 kolom di tablet, 4 kolom di desktop -->
+				<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+					{#each guide.capsule as item (item.id)}
+						<div class="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs flex flex-col justify-between transition-all hover:border-foreground/20">
+							<div>
+								<!-- Foto Item -->
+								<div class="aspect-square bg-stone-50 dark:bg-stone-900/40 p-2 flex items-center justify-center border-b border-border/70 relative overflow-hidden">
+									<img
+										src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
+										alt={item.name}
+										loading="lazy"
+										class="h-full w-full object-cover rounded-lg transition-transform duration-500 hover:scale-105"
+									/>
+									<span class="absolute top-2 left-2 rounded-md border border-border/80 bg-background/95 backdrop-blur-xs px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground shadow-2xs">
+										{item.category}
+									</span>
+								</div>
+
+								<!-- Info Item -->
+								<div class="p-2.5 sm:p-3 space-y-1">
+									<div class="font-serif text-xs sm:text-sm font-semibold text-foreground truncate" title={item.name}>
+										{item.name}
+									</div>
+
+									<div class="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
+										<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.color)}"></span>
+										<span class="truncate">{item.color}</span>
+									</div>
+
+									{#if item.priceEstimate}
+										<div class="text-[10px] font-mono text-muted-foreground font-medium truncate">
+											{item.priceEstimate}
+										</div>
+									{/if}
+								</div>
+							</div>
+
+							<!-- Tombol Beli Item -->
+							{#if item.affiliateUrl}
+								<div class="p-2.5 sm:p-3 pt-0">
+									<a
+										href={item.affiliateUrl}
+										target="_blank"
+										rel="noopener noreferrer nofollow"
+										class="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 hover:opacity-90 px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium shadow-2xs transition active:scale-95"
+										title="Beli {item.name}"
+									>
+										<ShoppingBagIcon class="size-3 sm:size-3.5 shrink-0" />
+										<span>Beli Item</span>
+									</a>
+								</div>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</section>
+
+			<!-- 5. SECTION: CHECKLIST BELANJA & PROGRES LEMARI -->
+			<section id="section-belanja" class="rounded-2xl border border-border/80 bg-card p-4 sm:p-7 shadow-xs space-y-4 sm:space-y-5">
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 border-b border-border/60 pb-3">
+					<div>
+						<h2 class="font-serif text-xl sm:text-2xl font-normal text-foreground">Checklist Belanja & Lemari</h2>
+						<p class="text-xs sm:text-sm text-muted-foreground mt-0.5">
+							Centang item yang sudah ada di lemari untuk melacak kesiapan capsule wardrobe-mu.
+						</p>
+					</div>
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={handlePrint}
+						class="hidden sm:inline-flex self-start sm:self-auto gap-1.5 text-xs rounded-lg shrink-0"
+					>
+						<PrinterIcon class="size-3.5" />
+						<span>Cetak PDF</span>
+					</Button>
+				</div>
+
+				<!-- Progress Bar -->
+				<div class="rounded-xl border border-border/70 bg-stone-50/50 dark:bg-stone-900/30 p-3 sm:p-4 space-y-1.5">
+					<div class="flex items-center justify-between text-xs font-medium text-foreground">
+						<span>Koleksi Lemari Saat Ini:</span>
+						<span class="font-mono text-muted-foreground">{ownedCount} dari {totalItemsCount} Item ({ownedPercentage}%)</span>
+					</div>
+					<Progress value={ownedPercentage} class="h-2 w-full bg-stone-100 dark:bg-stone-800" />
+				</div>
+
+				<!-- Daftar Item Belanja -->
+				<div class="space-y-2 sm:space-y-2.5">
+					{#each guide.shopping as item (item.id)}
+						{@const isChecked = Boolean(shoppingChecks[item.id])}
+						<div class="rounded-xl border border-border/70 bg-card p-2.5 sm:p-3 flex items-center justify-between gap-2.5 sm:gap-3 transition-all hover:border-foreground/20 shadow-2xs {isChecked ? 'opacity-50 bg-stone-50/50 dark:bg-stone-900/20' : ''}">
+							<div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+								<!-- Checkbox -->
+								<button
+									type="button"
+									onclick={() => handleToggleCheck(item.id)}
+									class="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg border transition-all {isChecked ? 'border-foreground bg-foreground text-background' : 'border-border/80 bg-background hover:border-foreground/50'}"
+									aria-label="Tandai kepemilikan item {item.name}"
+								>
+									{#if isChecked}
+										<CheckIcon class="size-3.5 stroke-[2.5]" />
+									{/if}
+								</button>
+
+								<!-- Thumbnail -->
+								<div class="size-9 sm:size-11 rounded-lg border border-border/70 bg-stone-50 dark:bg-stone-900/40 overflow-hidden shrink-0 flex items-center justify-center">
+									<img
+										src={item.imageUrl || `/images/real/items/${item.id.startsWith("outer-1") ? "blazer" : item.id.startsWith("outer-2") ? "cardigan" : item.id.startsWith("top-1") ? "shirt" : item.id.startsWith("top-2") ? "blouse" : item.id.startsWith("top-3") ? "tshirt" : item.id.startsWith("top-4") ? "knitwear" : item.id.startsWith("bottom-1") ? "trousers" : item.id.startsWith("bottom-2") ? "denim" : item.id.startsWith("bottom-3") ? "chinos" : item.id.startsWith("shoes-1") ? "sneakers" : item.id.startsWith("shoes-2") ? "loafers" : "bag"}.jpg`}
+										alt={item.name}
+										class="size-full object-cover"
+										loading="lazy"
+									/>
+								</div>
+
+								<div class="min-w-0 flex-1">
+									<div class="flex items-center gap-1.5 min-w-0">
+										<span class="font-serif text-xs sm:text-sm font-medium truncate {isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}">
+											{item.name}
+										</span>
+										<span class="rounded border border-border/80 px-1 py-0.2 text-[9px] font-medium text-muted-foreground uppercase shrink-0">
+											P{item.priority}
+										</span>
+									</div>
+									<div class="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+										<span class="size-2 rounded-full border border-black/15 shrink-0" style="background-color: {getColorHex(item.colorSuggestion)}"></span>
+										<span class="truncate">{item.colorSuggestion}</span>
+										<span class="mx-0.5 opacity-50 shrink-0">•</span>
+										<span class="shrink-0">{item.outfitCount} Look</span>
+										{#if item.priceEstimate}
+											<span class="mx-0.5 opacity-50 shrink-0">•</span>
+											<span class="font-mono text-[10px] shrink-0">{item.priceEstimate}</span>
 										{/if}
 									</div>
 								</div>
-							{/each}
+							</div>
+
+							<!-- Tombol Beli Item -->
+							{#if item.affiliateUrl}
+								<a
+									href={item.affiliateUrl}
+									target="_blank"
+									rel="noopener noreferrer nofollow"
+									class="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 hover:opacity-90 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold shadow-2xs transition active:scale-95"
+									title="Beli {item.name}"
+								>
+									<ShoppingBagIcon class="size-3 shrink-0" />
+									<span class="hidden sm:inline">Beli Item</span>
+									<span class="sm:hidden">Beli</span>
+								</a>
+							{/if}
 						</div>
-					</div>
-				</Tabs.Content>
+					{/each}
+				</div>
+			</section>
 
-				<!-- 4. TAB DETAIL WARNA KULIT PERSONAL -->
-				<Tabs.Content value="warna" class="space-y-6">
-					<div class="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-2xs space-y-4">
-						<div class="flex items-center gap-3.5 border-b border-border/70 pb-4">
-							<div
-								class="size-12 sm:size-14 rounded-2xl border border-black/15 shadow-sm shrink-0 flex items-center justify-center relative overflow-hidden"
-								style="background-color: {guide.photoAnalysis?.skinHex || colortoneProfiles[activeUndertone]?.skinHex};"
-							>
-								<span class="absolute bottom-1 right-1 rounded bg-black/60 backdrop-blur-xs px-1 text-[8px] font-mono text-white">
-									{guide.photoAnalysis?.skinHex || colortoneProfiles[activeUndertone]?.skinHex}
-								</span>
-							</div>
-							<div>
-								<div class="flex flex-wrap items-center gap-2">
-									<h3 class="font-serif text-base sm:text-lg font-bold text-foreground">
-										{colortoneProfiles[activeUndertone]?.title}
-									</h3>
-									<span class="rounded-full border border-border/80 bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-foreground capitalize">
-										Undertone {guide.palette.undertone}
-									</span>
-								</div>
-								<p class="text-xs text-muted-foreground mt-0.5 font-normal">
-									Karakteristik tone kulit tergolong undertone <strong class="text-foreground capitalize font-semibold">{guide.palette.undertone}</strong> ({colortoneProfiles[activeUndertone]?.badge}).
-								</p>
-							</div>
-						</div>
-
-						<!-- 4 Dimensi Karakteristik Color Tone -->
-						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
-								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">🩸 Ciri Urat Nadi</span>
-								<p class="font-medium text-foreground">{colortoneProfiles[activeUndertone]?.vein}</p>
-								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">{colortoneProfiles[activeUndertone]?.veinDesc}</p>
-							</div>
-
-							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
-								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">💍 Perhiasan & Logam</span>
-								<p class="font-medium text-foreground">{colortoneProfiles[activeUndertone]?.jewelry}</p>
-								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">Menyatu alami tanpa terlihat menabrak kulit.</p>
-							</div>
-
-							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
-								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">🌓 Panduan Kontras</span>
-								<p class="font-medium text-foreground">Harmonisasi Siluet</p>
-								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">{colortoneProfiles[activeUndertone]?.contrastAdvice}</p>
-							</div>
-
-							<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-3">
-								<span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">✨ Arah Nuansa</span>
-								<p class="font-medium text-foreground">{guide.palette.name}</p>
-								<p class="text-[11px] text-muted-foreground mt-0.5 leading-snug">{colortoneProfiles[activeUndertone]?.clothingMood}</p>
-							</div>
-						</div>
-
-						<!-- Warna Dasar (Base Colors) -->
-						<div class="space-y-3 pt-2">
-							<span class="text-xs font-semibold uppercase tracking-wider text-foreground block">
-								Warna Dasar Netral (70–80% Porsi Pakaian)
-							</span>
-							<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-								{#each guide.palette.baseColors as col}
-									<div class="rounded-xl border border-border/80 bg-card p-3 shadow-2xs">
-										<div class="h-16 w-full rounded-lg border border-black/10 shadow-inner mb-2 flex items-end p-1.5" style="background-color: {col.hex};">
-											<span class="rounded bg-black/50 backdrop-blur-xs px-1.5 py-0.2 font-mono text-[9px] text-white uppercase">
-												{col.hex}
-											</span>
-										</div>
-										<h4 class="text-xs font-semibold text-foreground">{col.name}</h4>
-										<p class="mt-0.5 text-[10px] text-muted-foreground leading-snug">{col.description}</p>
-									</div>
-								{/each}
-							</div>
-						</div>
-
-						<!-- Warna Aksen (Accent Colors) -->
-						<div class="space-y-3 pt-2">
-							<span class="text-xs font-semibold uppercase tracking-wider text-foreground block">
-								Warna Aksen Pemikat (15–20% Porsi Pakaian)
-							</span>
-							<div class="grid grid-cols-2 gap-3">
-								{#each guide.palette.accentColors as col}
-									<div class="rounded-xl border border-border/80 bg-card p-3 shadow-2xs">
-										<div class="h-16 w-full rounded-lg border border-black/10 shadow-inner mb-2 flex items-end p-1.5" style="background-color: {col.hex};">
-											<span class="rounded bg-black/50 backdrop-blur-xs px-1.5 py-0.2 font-mono text-[9px] text-white uppercase">
-												{col.hex}
-											</span>
-										</div>
-										<h4 class="text-xs font-semibold text-foreground">{col.name}</h4>
-										<p class="mt-0.5 text-[10px] text-muted-foreground leading-snug">{col.description}</p>
-									</div>
-								{/each}
-							</div>
-						</div>
-
-						<!-- Warna yang Dihindari -->
-						{#if guide.palette.avoidColors?.length}
-							<div class="space-y-3 pt-2">
-								<span class="text-xs font-semibold uppercase tracking-wider text-destructive block">
-									Warna yang Perlu Dihindari (Dapat Membuat Kulit Kusam)
-								</span>
-								<div class="grid grid-cols-2 gap-3">
-									{#each guide.palette.avoidColors as col}
-										<div class="rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-3">
-											<div class="h-14 w-full rounded-lg border border-black/10 shadow-inner mb-2 flex items-center justify-center relative overflow-hidden" style="background-color: {col.hex};">
-												<span class="size-5 rounded-full bg-black/50 text-white flex items-center justify-center text-[10px]">✕</span>
-											</div>
-											<h4 class="text-xs font-semibold text-foreground">{col.name}</h4>
-											<p class="mt-0.5 text-[10px] text-muted-foreground leading-snug">{col.description}</p>
-										</div>
-									{/each}
-								</div>
-							</div>
-						{/if}
-					</div>
-				</Tabs.Content>
-
-				<!-- 5. TAB RINGKASAN & ATURAN GAYA -->
-				<Tabs.Content value="ringkasan" class="space-y-6">
-					<div class="grid gap-4 md:grid-cols-3">
-						<div class="rounded-xl border border-border/80 bg-card p-4 sm:p-5 shadow-2xs">
-							<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1.5">
-								Arah Estetika
-							</span>
-							<h3 class="font-serif text-lg font-normal text-foreground">{guide.summary.primaryStyle}</h3>
-							<p class="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-								Koleksi dirancang untuk mengutamakan kesederhanaan, potongan proporsional, dan kemudahan mix-and-match dalam kegiatan sehari-hari.
-							</p>
-						</div>
-
-						<div class="rounded-xl border border-border/80 bg-card p-4 sm:p-5 shadow-2xs">
-							<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1.5">
-								Formula Rasio
-							</span>
-							<h3 class="font-serif text-lg font-normal text-foreground">{guide.summary.coreRatio}</h3>
-							<p class="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-								Hanya dengan 12 item esensial di lemarimu, kamu memiliki lebih dari 30 variasi pakaian berbeda untuk sebulan penuh.
-							</p>
-						</div>
-
-						<div class="rounded-xl border border-border/80 bg-card p-4 sm:p-5 shadow-2xs">
-							<span class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1.5">
-								Palet Warna
-							</span>
-							<h3 class="font-serif text-lg font-normal text-foreground">{guide.palette.name}</h3>
-							<p class="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-								{guide.palette.description}
+			<!-- 6. SECTION: 4 ATURAN PADU-PADAN CEPAT -->
+			<section class="rounded-2xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-4 sm:p-7 space-y-3.5 sm:space-y-4">
+				<h2 class="font-serif text-lg sm:text-xl font-normal text-foreground">
+					4 Aturan Esensial Padu-Padan
+				</h2>
+				<div class="grid gap-2.5 sm:gap-3 sm:grid-cols-2">
+					<div class="flex items-start gap-2.5 sm:gap-3 rounded-xl border border-border/70 bg-card p-3 sm:p-3.5">
+						<span class="font-mono text-xs font-bold text-muted-foreground shrink-0 mt-0.5">01</span>
+						<div>
+							<h3 class="text-xs font-semibold text-foreground">Kombinasi 3 Warna Maksimal</h3>
+							<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+								Gunakan 2 warna dasar netral ditambah 1 warna aksen lembut untuk siluet bersih dan rapi.
 							</p>
 						</div>
 					</div>
 
-					<!-- 4 Aturan Esensial Capsule Wardrobe -->
-					<div class="rounded-xl border border-border/80 bg-stone-50/50 dark:bg-stone-900/30 p-5 sm:p-7">
-						<h2 class="font-serif text-lg font-normal text-foreground mb-4">
-							4 Aturan Esensial Capsule Wardrobe
-						</h2>
-						<div class="grid gap-3 sm:grid-cols-2">
-							<div class="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-								<span class="font-mono text-xs font-bold text-muted-foreground mt-0.5 shrink-0">01</span>
-								<div>
-									<h3 class="text-xs font-semibold text-foreground">Kombinasi 3 Warna Maksimal</h3>
-									<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-										Gunakan 2 warna dasar netral ditambah 1 warna aksen lembut untuk menjaga siluet tetap bersih dan rapi.
-									</p>
-								</div>
-							</div>
-
-							<div class="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-								<span class="font-mono text-xs font-bold text-muted-foreground mt-0.5 shrink-0">02</span>
-								<div>
-									<h3 class="text-xs font-semibold text-foreground">Seimbangkan Volume Potongan</h3>
-									<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-										Jika atasanmu relaxed atau bervolume, padukan dengan bawahan berpotongan lurus (straight fit) atau sebaliknya.
-									</p>
-								</div>
-							</div>
-
-							<div class="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-								<span class="font-mono text-xs font-bold text-muted-foreground mt-0.5 shrink-0">03</span>
-								<div>
-									<h3 class="text-xs font-semibold text-foreground">Sepatu Menentukan Formalitas</h3>
-									<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-										Ganti sneakers putihmu dengan loafers kulit atau mules untuk mengubah outfit santai menjadi siap meeting dalam sekejap.
-									</p>
-								</div>
-							</div>
-
-							<div class="flex items-start gap-3 rounded-lg border border-border/70 bg-card p-3.5">
-								<span class="font-mono text-xs font-bold text-muted-foreground mt-0.5 shrink-0">04</span>
-								<div>
-									<h3 class="text-xs font-semibold text-foreground">Cek Lemari Sebelum Belanja</h3>
-									<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-										Gunakan tab Daftar Belanja untuk mencentang item yang sudah kamu punya. Hindari membeli item baru bila belum dibutuhkan.
-									</p>
-								</div>
-							</div>
+					<div class="flex items-start gap-2.5 sm:gap-3 rounded-xl border border-border/70 bg-card p-3.5">
+						<span class="font-mono text-xs font-bold text-muted-foreground shrink-0 mt-0.5">02</span>
+						<div>
+							<h3 class="text-xs font-semibold text-foreground">Seimbangkan Volume Potongan</h3>
+							<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+								Jika atasan bervolume/relaxed, padukan dengan bawahan straight fit atau sebaliknya.
+							</p>
 						</div>
 					</div>
-				</Tabs.Content>
+
+					<div class="flex items-start gap-2.5 sm:gap-3 rounded-xl border border-border/70 bg-card p-3.5">
+						<span class="font-mono text-xs font-bold text-muted-foreground shrink-0 mt-0.5">03</span>
+						<div>
+							<h3 class="text-xs font-semibold text-foreground">Sepatu Menentukan Formalitas</h3>
+							<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+								Ganti sneakers putihmu dengan loafers kulit untuk mengubah outfit santai menjadi siap meeting.
+							</p>
+						</div>
+					</div>
+
+					<div class="flex items-start gap-2.5 sm:gap-3 rounded-xl border border-border/70 bg-card p-3.5">
+						<span class="font-mono text-xs font-bold text-muted-foreground shrink-0 mt-0.5">04</span>
+						<div>
+							<h3 class="text-xs font-semibold text-foreground">Cek Lemari Sebelum Belanja</h3>
+							<p class="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+								Fokus melengkapi item prioritas utama yang belum kamu miliki untuk variasi look maksimal.
+							</p>
+						</div>
 					</div>
 				</div>
-			</Tabs.Root>
+			</section>
+
+			<!-- FOOTER: CATATAN & RESET -->
+			<footer class="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+				<p class="text-center sm:text-left leading-relaxed">
+					{data.affiliateSettings?.affiliate_disclaimer || "Rekomendasi busana dikurasi secara independen untuk memudahkan Anda menemukan pilihan outfit terbaik."}
+				</p>
+				<div class="flex items-center gap-3 shrink-0">
+					<Button href="/mulai" variant="outline" size="sm" class="text-xs">
+						<RotateCcwIcon class="size-3.5 mr-1.5" />
+						<span>Ulangi Style Check</span>
+					</Button>
+				</div>
+			</footer>
+
 		</div>
 	</main>
 
@@ -1302,24 +1014,112 @@
 		class="hidden"
 	>
 		<input type="hidden" name="outfitId" value={currentTryOnOutfitId} />
+		<input type="hidden" name="photoBase64" value={currentTryOnPhoto} />
 	</form>
 
-	<!-- Dialog Reset Style Check -->
-	<Dialog.Root bind:open={isResetDialogOpen}>
+	<!-- Dialog Rekomendasi Upload Foto Wajah untuk AI Try-On -->
+	<Dialog.Root bind:open={isPhotoPromptDialogOpen}>
 		<Dialog.Content class="sm:max-w-md">
 			<Dialog.Header>
-				<Dialog.Title class="font-serif text-xl">Ulangi Style Check?</Dialog.Title>
-				<Dialog.Description class="text-xs text-muted-foreground pt-1">
-					Kamu akan diarahkan kembali ke pertanyaan awal untuk memilih preferensi baru. Panduan saat ini tetap bisa dibuka jika kamu menyimpan tautannya.
+				<div class="flex size-10 items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-foreground mb-2">
+					<CameraIcon class="size-5" />
+				</div>
+				<Dialog.Title class="font-serif text-lg sm:text-xl font-semibold">
+					Disarankan Unggah Foto Wajah
+				</Dialog.Title>
+				<Dialog.Description class="text-xs text-muted-foreground pt-1 leading-relaxed">
+					Agar hasil visualisasi AI Try-On presisi dan menyerupai penampilan aslimu, disarankan untuk mengunggah foto wajah dengan pencahayaan yang jelas.
 				</Dialog.Description>
 			</Dialog.Header>
-			<Dialog.Footer class="mt-4 gap-2">
-				<Button variant="outline" onclick={() => (isResetDialogOpen = false)}>
-					Batal
-				</Button>
-				<Button href="/mulai" class="font-semibold">
-					Mulai Ulang Sekarang
-				</Button>
+
+			<div class="space-y-3 pt-2">
+				<!-- Area Upload Foto -->
+				<input
+					bind:this={photoInputRef}
+					type="file"
+					accept="image/*"
+					capture="user"
+					onchange={handleFacePhotoSelected}
+					class="hidden"
+				/>
+
+				{#if uploadedFacePhoto}
+					<div class="flex items-center gap-3 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5">
+						<img
+							src={uploadedFacePhoto}
+							alt="Preview Wajah"
+							class="size-13 rounded-lg object-cover border border-border shadow-xs"
+						/>
+						<div class="flex-1 min-w-0">
+							<div class="text-xs font-semibold text-foreground flex items-center gap-1">
+								<CheckCircle2Icon class="size-3.5 text-emerald-500" />
+								<span>Foto Wajah Terpasang</span>
+							</div>
+							<div class="text-[11px] text-muted-foreground mt-0.5">
+								Siap digunakan untuk simulasi try-on outfit.
+							</div>
+							<button
+								type="button"
+								onclick={() => photoInputRef?.click()}
+								class="text-xs text-primary font-medium hover:underline mt-1 block"
+							>
+								Ganti Foto Lain
+							</button>
+						</div>
+					</div>
+				{:else}
+					<button
+						type="button"
+						onclick={() => photoInputRef?.click()}
+						class="w-full flex flex-col items-center justify-center gap-2 p-4 sm:p-5 rounded-2xl border-2 border-dashed border-border hover:border-foreground/40 hover:bg-muted/40 transition-all text-center group cursor-pointer"
+					>
+						<div class="size-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center group-hover:scale-105 transition-transform text-muted-foreground group-hover:text-foreground">
+							<UploadCloudIcon class="size-5" />
+						</div>
+						<div>
+							<span class="text-xs font-semibold text-foreground block">
+								Pilih / Ambil Foto Wajah
+							</span>
+							<span class="text-[11px] text-muted-foreground mt-0.5 block">
+								Mendukung kamera langsung atau galeri (maks 5MB)
+							</span>
+						</div>
+					</button>
+				{/if}
+
+				<div class="rounded-xl border border-border/60 bg-stone-50/70 dark:bg-stone-900/40 p-2.5 text-[11px] text-muted-foreground flex items-center gap-2">
+					<InfoIcon class="size-4 shrink-0 text-muted-foreground" />
+					<span>Privasi aman: Foto hanya dipakai untuk simulasi AI personalmu.</span>
+				</div>
+			</div>
+
+			<Dialog.Footer class="mt-4 flex flex-col sm:flex-row gap-2">
+				{#if uploadedFacePhoto}
+					<Button
+						type="button"
+						onclick={confirmTryOnWithPhoto}
+						class="w-full sm:w-auto font-semibold bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 hover:opacity-90"
+					>
+						Gunakan Foto & Generate Try-On
+					</Button>
+				{:else}
+					<Button
+						type="button"
+						onclick={() => photoInputRef?.click()}
+						class="w-full sm:w-auto font-semibold bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 hover:opacity-90"
+					>
+						<CameraIcon class="size-4 mr-1.5" />
+						<span>Pilih Foto Wajah</span>
+					</Button>
+					<Button
+						type="button"
+						variant="ghost"
+						onclick={proceedTryOnWithoutPhoto}
+						class="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground"
+					>
+						Lanjutkan Tanpa Foto Wajah
+					</Button>
+				{/if}
 			</Dialog.Footer>
 		</Dialog.Content>
 	</Dialog.Root>
@@ -1336,12 +1136,12 @@
 					Tindakan ini akan menghapus permanen data panduan, rekomendasi warna, dan status checklist belanja dari server. Sesi anonimmu juga akan dibersihkan.
 				</Dialog.Description>
 			</Dialog.Header>
-			<Dialog.Footer class="mt-4 gap-2">
-				<Button variant="outline" onclick={() => (isDeleteDialogOpen = false)}>
+			<Dialog.Footer class="mt-4 flex flex-col-reverse sm:flex-row gap-2">
+				<Button variant="outline" onclick={() => (isDeleteDialogOpen = false)} class="w-full sm:w-auto">
 					Batal
 				</Button>
-				<form action="?/deleteData" method="POST">
-					<Button type="submit" variant="destructive" class="font-semibold">
+				<form action="?/deleteData" method="POST" class="w-full sm:w-auto">
+					<Button type="submit" variant="destructive" class="w-full sm:w-auto font-semibold">
 						Hapus Permanen
 					</Button>
 				</form>

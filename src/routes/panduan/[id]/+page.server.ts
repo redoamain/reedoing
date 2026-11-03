@@ -57,35 +57,23 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const activeAdminOutfits = await getActiveAdminOutfits();
 	const adminTemplates = activeAdminOutfits.length > 0 ? activeAdminOutfits : undefined;
 
-	const guidesByTone: Record<Undertone, StyleGuideResult> = {
-		hangat: enrichStyleGuide(
-			generateStyleGuide({ ...answers, undertone: "hangat" }, adminTemplates),
-			affiliateMap,
-			answers.gender
-		),
-		dingin: enrichStyleGuide(
-			generateStyleGuide({ ...answers, undertone: "dingin" }, adminTemplates),
-			affiliateMap,
-			answers.gender
-		),
-		netral: enrichStyleGuide(
-			generateStyleGuide({ ...answers, undertone: "netral" }, adminTemplates),
-			affiliateMap,
-			answers.gender
-		)
-	};
+	// Gunakan undertone spesifik dari hasil analisis foto / kuis pengguna
+	const userTone: Undertone =
+		(answers.undertone as Undertone) ||
+		(dbResult.palette?.undertone as Undertone) ||
+		"hangat";
 
-	const currentTone = answers.undertone || "hangat";
-	const activeGuide = guidesByTone[currentTone];
+	const generatedGuide = generateStyleGuide({ ...answers, undertone: userTone }, adminTemplates);
+	const enrichedGuide = enrichStyleGuide(generatedGuide, affiliateMap, answers.gender);
 
-	// Gabungkan data dari DB dengan summary dan data tone aktif
+	// Gabungkan data dari DB dengan summary dan data tone spesifik pengguna
 	const result: StyleGuideResult = {
-		summary: activeGuide.summary,
-		palette: dbResult.palette || activeGuide.palette,
-		capsule: dbResult.capsule || activeGuide.capsule,
-		outfits: dbResult.outfits || activeGuide.outfits,
-		shopping: dbResult.shopping || activeGuide.shopping,
-		photoAnalysis: activeGuide.photoAnalysis
+		summary: enrichedGuide.summary,
+		palette: dbResult.palette || enrichedGuide.palette,
+		capsule: dbResult.capsule || enrichedGuide.capsule,
+		outfits: dbResult.outfits || enrichedGuide.outfits,
+		shopping: dbResult.shopping || enrichedGuide.shopping,
+		photoAnalysis: enrichedGuide.photoAnalysis
 	};
 
 	const checks = await getShoppingChecks(id);
@@ -97,7 +85,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		isSample: false,
 		sampleGender: answers.gender || "pria",
 		result,
-		guidesByTone,
 		checks,
 		aiImages,
 		hasGeminiKey,
@@ -118,6 +105,7 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const outfitId = formData.get("outfitId")?.toString();
+		const photoFromForm = formData.get("photoBase64")?.toString();
 
 		if (!outfitId) {
 			return fail(400, { error: "ID Outfit diperlukan." });
@@ -156,10 +144,14 @@ export const actions: Actions = {
 			return fail(404, { error: "Outfit tidak ditemukan." });
 		}
 
+		const userPhoto = (photoFromForm && photoFromForm.trim().length > 0)
+			? photoFromForm.trim()
+			: answers.photoBase64;
+
 		const aiRes = await generateOutfitTryOn({
 			outfit,
 			userAnswers: answers,
-			userPhotoBase64: answers.photoBase64
+			userPhotoBase64: userPhoto
 		});
 
 		if (!aiRes.success || !aiRes.imageUrl) {

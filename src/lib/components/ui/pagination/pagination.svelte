@@ -123,14 +123,14 @@
 		</div>
 
 		{#if totalPages > 1}
-			<nav aria-label="Pagination" class="flex items-center gap-1 order-1 sm:order-2">
+			<nav aria-label="Pagination" class="flex items-center justify-center gap-1 order-1 sm:order-2 flex-wrap sm:flex-nowrap">
 				{#if showEdges}
 					<button
 						type="button"
 						onclick={() => goToPage(1)}
 						disabled={page <= 1}
 						aria-label="Halaman Pertama"
-						class="hidden sm:inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
+						class="hidden sm:inline-flex size-7 sm:size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
 					>
 						<ChevronsLeftIcon class="size-3.5" />
 					</button>
@@ -141,7 +141,7 @@
 					onclick={() => goToPage(page - 1)}
 					disabled={page <= 1}
 					aria-label="Halaman Sebelumnya"
-					class="inline-flex h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-2.5 text-xs font-medium text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
+					class="inline-flex h-7 sm:h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-2 sm:px-2.5 text-xs font-medium text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
 				>
 					<ChevronLeftIcon class="size-3.5" />
 					<span class="hidden sm:inline">Sebelumnya</span>
@@ -150,7 +150,7 @@
 				<div class="flex items-center gap-1">
 					{#each pageList as item, i (i)}
 						{#if item === "..."}
-							<span class="inline-flex size-8 items-center justify-center text-xs text-muted-foreground select-none">
+							<span class="inline-flex size-7 sm:size-8 items-center justify-center text-xs text-muted-foreground select-none">
 								…
 							</span>
 						{:else}
@@ -159,7 +159,7 @@
 								onclick={() => goToPage(item as number)}
 								aria-current={page === item ? "page" : undefined}
 								class={cn(
-									"inline-flex size-8 items-center justify-center rounded-lg text-xs font-medium transition-all shadow-2xs",
+									"inline-flex size-7 sm:size-8 items-center justify-center rounded-lg text-xs font-medium transition-all shadow-2xs",
 									page === item
 										? "bg-foreground text-background font-semibold"
 										: "border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800"
@@ -176,7 +176,7 @@
 					onclick={() => goToPage(page + 1)}
 					disabled={page >= totalPages}
 					aria-label="Halaman Selanjutnya"
-					class="inline-flex h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-2.5 text-xs font-medium text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
+					class="inline-flex h-7 sm:h-8 items-center gap-1 rounded-lg border border-border/80 bg-background px-2 sm:px-2.5 text-xs font-medium text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
 				>
 					<span class="hidden sm:inline">Selanjutnya</span>
 					<ChevronRightIcon class="size-3.5" />
@@ -188,7 +188,7 @@
 						onclick={() => goToPage(totalPages)}
 						disabled={page >= totalPages}
 						aria-label="Halaman Terakhir"
-						class="hidden sm:inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
+						class="hidden sm:inline-flex size-7 sm:size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-foreground hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs"
 					>
 						<ChevronsRightIcon class="size-3.5" />
 					</button>
